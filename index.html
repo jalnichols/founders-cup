@@ -794,14 +794,17 @@
                 const button = document.createElement('button');
                 button.className = 'btn-hole-nav';
                 button.textContent = hole;
-                button.onclick = () => goToHole(hole);
+                button.onclick = () => {
+                    console.log('Hole navigation clicked:', hole);
+                    goToHole(hole);
+                };
                 
                 if (hole === currentHole) {
                     button.classList.add('active');
                 }
                 
                 const scores = matchScores[currentMatch];
-                if (scores && scores.team1[hole] && scores.team2[hole]) {
+                if (scores && scores.team1 && scores.team2 && scores.team1[hole] && scores.team2[hole]) {
                     button.classList.add('completed');
                 }
                 
@@ -813,7 +816,10 @@
             const match = findMatch(currentMatch);
             const scores = matchScores[currentMatch];
             
-            if (!match || !scores) return;
+            if (!match || !scores) {
+                console.log('Match or scores not found for:', currentMatch);
+                return;
+            }
             
             // Update hole display
             document.getElementById('current-hole-display').textContent = `Hole ${currentHole}`;
@@ -836,6 +842,15 @@
             // Update quick score buttons
             updateQuickScoreButtons(1, scores.team1[currentHole]);
             updateQuickScoreButtons(2, scores.team2[currentHole]);
+            
+            // Re-attach event listeners to quick score buttons
+            document.querySelectorAll('.btn-quick-score').forEach(button => {
+                button.onclick = () => {
+                    const team = button.dataset.team;
+                    const score = button.dataset.score;
+                    quickScore(team, score);
+                };
+            });
             
             // Update hole result
             updateHoleResult();
@@ -898,9 +913,10 @@
         function updateMatchStatus() {
             const scores = matchScores[currentMatch];
             
-            // Safety check
+            // Safety check - initialize if needed
             if (!scores || !scores.team1 || !scores.team2) {
-                console.log('Match scores not properly initialized for:', currentMatch);
+                console.log('Match scores not properly initialized for match status, initializing...');
+                initializeMatchScores();
                 return;
             }
             
@@ -908,6 +924,11 @@
             
             const statusDiv = document.getElementById('match-status');
             const handicapsDiv = document.getElementById('match-handicaps');
+            
+            if (!statusDiv || !handicapsDiv) {
+                console.log('Status divs not found');
+                return;
+            }
             
             let statusStyle = '';
             let statusText = matchStatus.description;
@@ -927,11 +948,13 @@
             }
             
             statusDiv.innerHTML = `<div class="text-center"><span style="${statusStyle} display: inline-block;">${statusText}</span></div>`;
-            handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap}</span>`;
+            handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap || 0}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap || 0}</span>`;
         }
 
         // Event handlers
         function switchView(view) {
+            console.log('Switching to view:', view);
+            
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('setup-view').classList.add('hidden');
             document.getElementById('scoring-view').classList.add('hidden');
@@ -949,7 +972,10 @@
                 renderSetup();
             } else if (view === 'scoring') {
                 document.getElementById('scoring-view').classList.remove('hidden');
-                updateScoringInterface();
+                // Delay the updateScoringInterface call to ensure DOM elements exist
+                setTimeout(() => {
+                    updateScoringInterface();
+                }, 100);
             }
             
             currentView = view;
@@ -1026,24 +1052,57 @@
             document.getElementById('match-players').textContent = playersText;
             
             switchView('scoring');
+            
+            // Set up event listeners for scoring inputs after the view is switched
+            setTimeout(() => {
+                const team1Input = document.getElementById('team1-score');
+                const team2Input = document.getElementById('team2-score');
+                
+                if (team1Input) {
+                    team1Input.oninput = (e) => {
+                        console.log('Team 1 score input:', e.target.value);
+                        updateScore(1, currentHole, e.target.value);
+                    };
+                }
+                
+                if (team2Input) {
+                    team2Input.oninput = (e) => {
+                        console.log('Team 2 score input:', e.target.value);
+                        updateScore(2, currentHole, e.target.value);
+                    };
+                }
+            }, 100);
         }
 
         function goToHole(hole) {
+            console.log('Going to hole:', hole);
             currentHole = hole;
             updateScoringInterface();
         }
 
         async function updateScore(team, hole, score) {
             const scores = matchScores[currentMatch];
-            scores[`team${team}`][hole] = parseInt(score) || 0;
+            
+            if (!scores || !scores.team1 || !scores.team2) {
+                console.log('Match scores not properly initialized, initializing now');
+                initializeMatchScores();
+                return;
+            }
+            
+            const parsedScore = parseInt(score) || 0;
+            scores[`team${team}`][hole] = parsedScore;
+            
+            console.log(`Updated score: Team ${team}, Hole ${hole}, Score ${parsedScore}`);
             
             // Save to Firebase
             await updateFirebase('matchScores', { [currentMatch]: scores });
             
+            // Update the interface
             updateScoringInterface();
         }
 
         function quickScore(team, score) {
+            console.log('Quick score clicked:', team, score, 'for hole', currentHole);
             updateScore(team, currentHole, score);
         }
 
@@ -1051,11 +1110,12 @@
         function init() {
             console.log('Starting app initialization');
             
-            // Set up event listeners
+            // Set up navigation event listeners
             document.getElementById('nav-dashboard').onclick = () => switchView('dashboard');
             document.getElementById('nav-setup').onclick = () => switchView('setup');
             document.getElementById('back-to-dashboard').onclick = () => switchView('dashboard');
             
+            // Set up hole navigation event listeners
             document.getElementById('prev-hole').onclick = () => {
                 if (currentHole > 1) {
                     currentHole--;
@@ -1069,24 +1129,6 @@
                     updateScoringInterface();
                 }
             };
-            
-            // Score input listeners
-            document.getElementById('team1-score').oninput = (e) => {
-                updateScore(1, currentHole, e.target.value);
-            };
-            
-            document.getElementById('team2-score').oninput = (e) => {
-                updateScore(2, currentHole, e.target.value);
-            };
-            
-            // Quick score button listeners
-            document.querySelectorAll('.btn-quick-score').forEach(button => {
-                button.onclick = () => {
-                    const team = button.dataset.team;
-                    const score = button.dataset.score;
-                    quickScore(team, score);
-                };
-            });
             
             // Set initial view to dashboard
             currentView = 'dashboard';
