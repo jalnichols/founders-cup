@@ -390,7 +390,7 @@
                     updateConnectionStatus(connected);
                 });
 
-                // Load tournament data
+                // Load tournament data first
                 const tournamentRef = ref(database, 'tournament');
                 onValue(tournamentRef, (snapshot) => {
                     if (snapshot.exists()) {
@@ -402,48 +402,54 @@
                         saveToFirebase('tournament', tournament);
                     }
                     
-                    // Initialize match scores after tournament data is loaded
-                    initializeMatchScores();
-                    renderCurrentView();
-                });
-
-                // Load match scores
-                const scoresRef = ref(database, 'matchScores');
-                onValue(scoresRef, (snapshot) => {
-                    console.log('Firebase match scores snapshot received');
-                    if (snapshot.exists()) {
-                        const firebaseScores = snapshot.val();
-                        console.log('Match scores loaded from Firebase:', firebaseScores);
-                        
-                        // Merge with existing scores, preserving any local changes
-                        matchScores = { ...matchScores, ...firebaseScores };
-                        
-                        // Ensure all matches have proper structure
-                        Object.values(tournament).forEach(day => {
-                            day.matches.forEach(match => {
-                                if (!matchScores[match.id]) {
-                                    matchScores[match.id] = {
-                                        team1: {},
-                                        team2: {},
-                                        team1Handicap: 0,
-                                        team2Handicap: 0
-                                    };
-                                }
-                            });
-                        });
-                        
-                        console.log('Final matchScores after Firebase load:', matchScores);
-                    } else {
-                        console.log('No match scores found in Firebase, initializing empty scores');
-                        initializeMatchScores();
-                    }
-                    renderCurrentView();
+                    // After tournament data is loaded, load match scores
+                    loadMatchScores();
                 });
                 
             } catch (error) {
                 console.error('Firebase initialization error:', error);
                 updateConnectionStatus(false);
             }
+        }
+
+        // Separate function to load match scores after tournament data is ready
+        function loadMatchScores() {
+            const { database, ref, onValue } = window.firebase;
+            
+            // Load match scores
+            const scoresRef = ref(database, 'matchScores');
+            onValue(scoresRef, (snapshot) => {
+                console.log('Firebase match scores snapshot received');
+                if (snapshot.exists()) {
+                    const firebaseScores = snapshot.val();
+                    console.log('Match scores loaded from Firebase:', firebaseScores);
+                    
+                    // Use Firebase data as the primary source
+                    matchScores = firebaseScores;
+                    
+                    // Only initialize missing matches (don't overwrite existing scores)
+                    Object.values(tournament).forEach(day => {
+                        day.matches.forEach(match => {
+                            if (!matchScores[match.id]) {
+                                console.log(`Creating new match scores for: ${match.id}`);
+                                matchScores[match.id] = {
+                                    team1: {},
+                                    team2: {},
+                                    team1Handicap: 0,
+                                    team2Handicap: 0
+                                };
+                            }
+                        });
+                    });
+                    
+                    console.log('Final matchScores after Firebase load:', matchScores);
+                } else {
+                    console.log('No match scores found in Firebase, initializing empty scores');
+                    // Initialize all match scores since none exist
+                    initializeMatchScores();
+                }
+                renderCurrentView();
+            });
         }
 
         // Data Management functions
@@ -478,18 +484,66 @@
             console.log('Current match:', currentMatch);
             console.log('Firebase enabled:', firebaseEnabled);
             
-            // Also log a sample of what should be in Firebase
-            const sampleScores = {};
-            Object.values(tournament).forEach(day => {
-                day.matches.forEach(match => {
-                    if (matchScores[match.id]) {
-                        sampleScores[match.id] = matchScores[match.id];
+            // Check if any matches actually have scores
+            let hasScores = false;
+            Object.keys(matchScores).forEach(matchId => {
+                const scores = matchScores[matchId];
+                if (scores && scores.team1 && scores.team2) {
+                    const team1Holes = Object.keys(scores.team1).length;
+                    const team2Holes = Object.keys(scores.team2).length;
+                    if (team1Holes > 0 || team2Holes > 0) {
+                        hasScores = true;
+                        console.log(`Match ${matchId} has scores:`, scores);
                     }
-                });
+                }
             });
-            console.log('Match scores that should be in Firebase:', sampleScores);
+            
+            console.log('Has any actual scores:', hasScores);
+            
+            // Also check what's in Firebase
+            checkFirebaseData();
             
             alert('Current data logged to console. Press F12 to view.');
+        }
+
+        async function checkFirebaseData() {
+            if (!firebaseEnabled) {
+                console.log('Firebase not enabled, cannot check Firebase data');
+                return;
+            }
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                
+                const scoresRef = ref(database, 'matchScores');
+                const snapshot = await get(scoresRef);
+                
+                if (snapshot.exists()) {
+                    const firebaseScores = snapshot.val();
+                    console.log('=== FIREBASE DATA ===');
+                    console.log('Firebase match scores:', firebaseScores);
+                    
+                    // Check if Firebase has any actual scores
+                    let firebaseHasScores = false;
+                    Object.keys(firebaseScores).forEach(matchId => {
+                        const scores = firebaseScores[matchId];
+                        if (scores && scores.team1 && scores.team2) {
+                            const team1Holes = Object.keys(scores.team1).length;
+                            const team2Holes = Object.keys(scores.team2).length;
+                            if (team1Holes > 0 || team2Holes > 0) {
+                                firebaseHasScores = true;
+                                console.log(`Firebase match ${matchId} has scores:`, scores);
+                            }
+                        }
+                    });
+                    
+                    console.log('Firebase has any actual scores:', firebaseHasScores);
+                } else {
+                    console.log('No match scores found in Firebase');
+                }
+            } catch (error) {
+                console.error('Error checking Firebase data:', error);
+            }
         }
 
         async function forceFirebaseSync() {
@@ -690,11 +744,12 @@
         // Initialize match scores
         function initializeMatchScores() {
             console.log('Initializing match scores...');
+            console.log('Current matchScores before initialization:', matchScores);
             
             Object.values(tournament).forEach(day => {
                 day.matches.forEach(match => {
                     if (!matchScores[match.id]) {
-                        console.log(`Creating scores for match: ${match.id}`);
+                        console.log(`Creating NEW scores for match: ${match.id}`);
                         matchScores[match.id] = {
                             team1: {},
                             team2: {},
@@ -702,6 +757,7 @@
                             team2Handicap: 0
                         };
                     } else {
+                        console.log(`Match ${match.id} already has scores, preserving them`);
                         // Ensure the structure exists even if partially loaded from Firebase
                         if (!matchScores[match.id].team1) {
                             matchScores[match.id].team1 = {};
@@ -717,20 +773,22 @@
                         }
                     }
                     
-                    // Update handicaps
-                    if (match.type === 'singles') {
+                    // Update handicaps only if players are assigned
+                    if (match.type === 'singles' && match.team1Player && match.team2Player) {
                         matchScores[match.id].team1Handicap = getPlayerHandicap(match.team1Player, day.course, 'singles');
                         matchScores[match.id].team2Handicap = getPlayerHandicap(match.team2Player, day.course, 'singles');
-                    } else {
+                    } else if (match.type === 'doubles' && match.team1Players[0] && match.team1Players[1] && match.team2Players[0] && match.team2Players[1]) {
                         matchScores[match.id].team1Handicap = getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course);
                         matchScores[match.id].team2Handicap = getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course);
                     }
                 });
             });
             
-            console.log('Match scores initialized:', matchScores);
+            console.log('Match scores after initialization:', matchScores);
             
+            // Only save to Firebase if we created new matches (don't overwrite existing scores)
             if (firebaseEnabled) {
+                console.log('Saving initialized match scores to Firebase');
                 saveToFirebase('matchScores', matchScores);
             }
         }
