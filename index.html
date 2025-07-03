@@ -162,6 +162,22 @@
             </div>
             
             <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Testing & Debugging</h3>
+                <div class="space-y-3">
+                    <button onclick="testFirebaseConnection()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        🔍 Test Firebase Connection
+                    </button>
+                    <button onclick="logCurrentData()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                        📊 Log Current Data to Console
+                    </button>
+                    <button onclick="forceFirebaseSync()" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium">
+                        🔄 Force Firebase Sync
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">⚠️ Danger Zone</h3>
                 <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                     <h3 class="text-lg font-semibold text-red-800 mb-2">⚠️ Warning</h3>
                     <p class="text-red-700">This will permanently delete all tournament data including player assignments, match scores, and reset everything to the beginning state. This action cannot be undone.</p>
@@ -394,11 +410,31 @@
                 // Load match scores
                 const scoresRef = ref(database, 'matchScores');
                 onValue(scoresRef, (snapshot) => {
+                    console.log('Firebase match scores snapshot received');
                     if (snapshot.exists()) {
-                        matchScores = snapshot.val();
-                        console.log('Match scores loaded from Firebase:', matchScores);
+                        const firebaseScores = snapshot.val();
+                        console.log('Match scores loaded from Firebase:', firebaseScores);
+                        
+                        // Merge with existing scores, preserving any local changes
+                        matchScores = { ...matchScores, ...firebaseScores };
+                        
+                        // Ensure all matches have proper structure
+                        Object.values(tournament).forEach(day => {
+                            day.matches.forEach(match => {
+                                if (!matchScores[match.id]) {
+                                    matchScores[match.id] = {
+                                        team1: {},
+                                        team2: {},
+                                        team1Handicap: 0,
+                                        team2Handicap: 0
+                                    };
+                                }
+                            });
+                        });
+                        
+                        console.log('Final matchScores after Firebase load:', matchScores);
                     } else {
-                        console.log('No match scores found, initializing empty scores');
+                        console.log('No match scores found in Firebase, initializing empty scores');
                         initializeMatchScores();
                     }
                     renderCurrentView();
@@ -411,6 +447,59 @@
         }
 
         // Data Management functions
+        async function testFirebaseConnection() {
+            console.log('Testing Firebase connection...');
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                const testRef = ref(database, '.info/connected');
+                const snapshot = await get(testRef);
+                
+                console.log('Firebase connection test result:', snapshot.val());
+                alert(`Firebase connection: ${snapshot.val() ? 'Connected' : 'Disconnected'}`);
+            } catch (error) {
+                console.error('Firebase test error:', error);
+                alert('Firebase connection test failed: ' + error.message);
+            }
+        }
+
+        function logCurrentData() {
+            console.log('=== CURRENT DATA STATE ===');
+            console.log('Tournament data:', tournament);
+            console.log('Match scores:', matchScores);
+            console.log('Current match:', currentMatch);
+            console.log('Firebase enabled:', firebaseEnabled);
+            
+            // Also log a sample of what should be in Firebase
+            const sampleScores = {};
+            Object.values(tournament).forEach(day => {
+                day.matches.forEach(match => {
+                    if (matchScores[match.id]) {
+                        sampleScores[match.id] = matchScores[match.id];
+                    }
+                });
+            });
+            console.log('Match scores that should be in Firebase:', sampleScores);
+            
+            alert('Current data logged to console. Press F12 to view.');
+        }
+
+        async function forceFirebaseSync() {
+            console.log('Forcing Firebase sync...');
+            
+            try {
+                // Force save all data
+                await saveToFirebase('tournament', tournament);
+                await saveToFirebase('matchScores', matchScores);
+                
+                console.log('Firebase sync completed');
+                alert('Firebase sync completed. Check console for details.');
+            } catch (error) {
+                console.error('Firebase sync error:', error);
+                alert('Firebase sync failed: ' + error.message);
+            }
+        }
+
         async function wipeAllData() {
             const password = document.getElementById('data-password').value;
             
@@ -1235,7 +1324,9 @@
             updateMatchHandicaps(tournament[day].matches[matchIndex], tournament[day].course);
             
             // Save to Firebase
+            console.log('Saving tournament setup to Firebase');
             await saveToFirebase('tournament', tournament);
+            await saveToFirebase('matchScores', matchScores);
             
             renderSetup();
         }
@@ -1245,7 +1336,9 @@
             updateMatchHandicaps(tournament[day].matches[matchIndex], tournament[day].course);
             
             // Save to Firebase
+            console.log('Saving tournament setup to Firebase');
             await saveToFirebase('tournament', tournament);
+            await saveToFirebase('matchScores', matchScores);
             
             renderSetup();
         }
@@ -1343,10 +1436,10 @@
             
             console.log(`Score updated: ${JSON.stringify(scores)}`);
             
-            // Update Firebase
+            // Update Firebase - save the entire matchScores object
             try {
-                await updateFirebase('matchScores', { [currentMatch]: scores });
-                console.log('Score saved to Firebase');
+                await saveToFirebase('matchScores', matchScores);
+                console.log('All match scores saved to Firebase');
             } catch (error) {
                 console.error('Error saving to Firebase:', error);
             }
