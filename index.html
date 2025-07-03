@@ -36,6 +36,30 @@
         .btn-hole-nav.completed {
             @apply bg-green-100 text-green-700;
         }
+        .team-big-boys {
+            @apply text-blue-600;
+        }
+        .team-putt-pirates {
+            @apply text-pink-600;
+        }
+        .bg-team-big-boys {
+            @apply bg-blue-50 border-blue-200;
+        }
+        .bg-team-putt-pirates {
+            @apply bg-pink-50 border-pink-200;
+        }
+        .border-team-big-boys {
+            @apply border-blue-600;
+        }
+        .border-team-putt-pirates {
+            @apply border-pink-600;
+        }
+        .btn-team-big-boys {
+            @apply bg-blue-600 text-white hover:bg-blue-700;
+        }
+        .btn-team-putt-pirates {
+            @apply bg-pink-600 text-white hover:bg-pink-700;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -131,11 +155,11 @@
                     <h3 id="hole-title" class="text-xl font-semibold mb-4 text-center">Hole 1 Scoring</h3>
                     
                     <!-- Team 1 -->
-                    <div class="mb-6">
-                        <h4 id="team1-name" class="text-lg font-medium text-gray-900 mb-3"></h4>
+                    <div class="mb-6 bg-team-big-boys border-2 border-team-big-boys rounded-lg p-4">
+                        <h4 id="team1-name" class="text-lg font-medium text-blue-700 mb-3"></h4>
                         <div class="flex items-center space-x-3 mb-3">
-                            <input id="team1-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" placeholder="0">
-                            <div class="text-sm text-gray-600">strokes</div>
+                            <input id="team1-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" placeholder="0">
+                            <div class="text-sm text-blue-600">strokes</div>
                         </div>
                         <div id="team1-buttons" class="grid grid-cols-6 gap-2">
                             <button class="btn-quick-score" data-team="1" data-score="3">3</button>
@@ -148,11 +172,11 @@
                     </div>
 
                     <!-- Team 2 -->
-                    <div class="mb-6">
-                        <h4 id="team2-name" class="text-lg font-medium text-gray-900 mb-3"></h4>
+                    <div class="mb-6 bg-team-putt-pirates border-2 border-team-putt-pirates rounded-lg p-4">
+                        <h4 id="team2-name" class="text-lg font-medium text-pink-700 mb-3"></h4>
                         <div class="flex items-center space-x-3 mb-3">
-                            <input id="team2-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" placeholder="0">
-                            <div class="text-sm text-gray-600">strokes</div>
+                            <input id="team2-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-pink-300 rounded-lg focus:border-pink-500 focus:ring-2 focus:ring-pink-200" placeholder="0">
+                            <div class="text-sm text-pink-600">strokes</div>
                         </div>
                         <div id="team2-buttons" class="grid grid-cols-6 gap-2">
                             <button class="btn-quick-score" data-team="2" data-score="3">3</button>
@@ -186,6 +210,12 @@
     </div>
 
     <script>
+        // Team information
+        const teamInfo = {
+            team1: { name: 'Big Boys', color: 'blue', cssClass: 'team-big-boys' },
+            team2: { name: 'Putt Pirates', color: 'pink', cssClass: 'team-putt-pirates' }
+        };
+
         // Handicap data
         const handicapData = [
             { Name: "Kevin", TEAM: "team1", HANDICAP: 1, "MV SINGLES": 5, "MV DOUBLES LOW": 2, "MV DOUBLES HIGH": 0, "SL SINGLES": 5, "SL DOUBLES LOW": 2, "SL DOUBLES HIGH": 0 },
@@ -274,6 +304,18 @@
             return 'tie';
         }
 
+        function getTeamDisplayName(teamKey) {
+            return teamInfo[teamKey].name;
+        }
+
+        function getTeamColorClass(teamKey) {
+            return teamInfo[teamKey].cssClass;
+        }
+
+        function getTeamBackgroundClass(teamKey) {
+            return `bg-team-${teamKey === 'team1' ? 'big-boys' : 'putt-pirates'}`;
+        }
+
         function calculateMatchStatus(scores) {
             let team1Up = 0;
             let holesPlayed = 0;
@@ -300,6 +342,7 @@
                 return {
                     status: 'completed',
                     winner: team1Up > 0 ? 'team1' : 'team2',
+                    winnerName: team1Up > 0 ? getTeamDisplayName('team1') : getTeamDisplayName('team2'),
                     margin: Math.abs(team1Up),
                     description: `${Math.abs(team1Up)} & ${holesRemaining}`
                 };
@@ -312,6 +355,7 @@
                 return {
                     status: 'completed',
                     winner: team1Up > 0 ? 'team1' : 'team2',
+                    winnerName: team1Up > 0 ? getTeamDisplayName('team1') : getTeamDisplayName('team2'),
                     margin: Math.abs(team1Up),
                     description: `${Math.abs(team1Up)} up`
                 };
@@ -324,6 +368,7 @@
             return {
                 status: 'playing',
                 leader: team1Up > 0 ? 'team1' : 'team2',
+                leaderName: team1Up > 0 ? getTeamDisplayName('team1') : getTeamDisplayName('team2'),
                 margin: Math.abs(team1Up),
                 description: `${Math.abs(team1Up)} up`
             };
@@ -352,7 +397,7 @@
             Object.values(tournament).forEach(day => {
                 day.matches.forEach(match => {
                     const matchDiv = document.createElement('div');
-                    matchDiv.className = 'bg-white rounded-lg shadow-lg p-6';
+                    matchDiv.className = 'bg-white rounded-lg shadow-lg p-6 border-2 border-gray-200';
                     
                     const team1Display = match.type === 'singles' ? 
                         (match.team1Player || 'TBD') : 
@@ -387,12 +432,13 @@
                         let statusText = matchStatus.description;
                         
                         if (matchStatus.status === 'completed') {
-                            statusClass = 'text-green-600';
-                            statusText = `${matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins ${matchStatus.description}`;
+                            statusClass = matchStatus.winner === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                            statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
                         } else if (matchStatus.status === 'tied') {
                             statusClass = 'text-yellow-600';
                         } else if (matchStatus.leader) {
-                            statusText = `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}`;
+                            statusClass = matchStatus.leader === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                            statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
                         }
                         
                         statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md">
@@ -407,16 +453,20 @@
                         </div>
                         <div class="space-y-2 mb-4">
                             <div class="text-sm">
-                                <div class="flex justify-between">
-                                    <span>${team1Display}</span>
+                                <div class="flex justify-between items-center">
+                                    <span class="team-big-boys font-semibold">${getTeamDisplayName('team1')}</span>
                                     <span class="text-gray-400">vs</span>
-                                    <span>${team2Display}</span>
+                                    <span class="team-putt-pirates font-semibold">${getTeamDisplayName('team2')}</span>
+                                </div>
+                                <div class="flex justify-between text-xs mt-1">
+                                    <span class="team-big-boys">${team1Display}</span>
+                                    <span class="team-putt-pirates">${team2Display}</span>
                                 </div>
                                 ${handicapDisplay}
                             </div>
                         </div>
                         ${statusDisplay}
-                        <button class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium" onclick="openMatch('${match.id}')">
+                        <button class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium" onclick="openMatch('${match.id}')">
                             ⚡ Score Match
                         </button>
                     `;
@@ -479,11 +529,15 @@
                                     <div class="space-y-2">
                                         <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team1', 0, this.value)">
                                             <option value="">Select Player 1</option>
-                                            ${team1Options}
+                                            ${getTeamPlayers('team1').map(p => 
+                                                `<option value="${p.Name}" ${match.team1Players[0] === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                                            ).join('')}
                                         </select>
                                         <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team1', 1, this.value)">
                                             <option value="">Select Player 2</option>
-                                            ${team1Options}
+                                            ${getTeamPlayers('team1').map(p => 
+                                                `<option value="${p.Name}" ${match.team1Players[1] === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                                            ).join('')}
                                         </select>
                                     </div>
                                 </div>
@@ -492,11 +546,15 @@
                                     <div class="space-y-2">
                                         <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team2', 0, this.value)">
                                             <option value="">Select Player 1</option>
-                                            ${team2Options}
+                                            ${getTeamPlayers('team2').map(p => 
+                                                `<option value="${p.Name}" ${match.team2Players[0] === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                                            ).join('')}
                                         </select>
                                         <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team2', 1, this.value)">
                                             <option value="">Select Player 2</option>
-                                            ${team2Options}
+                                            ${getTeamPlayers('team2').map(p => 
+                                                `<option value="${p.Name}" ${match.team2Players[1] === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                                            ).join('')}
                                         </select>
                                     </div>
                                 </div>
@@ -515,9 +573,11 @@
                         <div class="border rounded-lg p-4 bg-gray-50">
                             <h3 class="font-medium text-gray-700 mb-3">${match.name}</h3>
                             ${playerSelectionHtml}
-                            <div class="mt-3 p-3 bg-blue-50 rounded-md">
-                                <div class="text-sm text-blue-800">
-                                    <strong>Handicaps:</strong> Team 1: ${team1Handicap} | Team 2: ${team2Handicap}
+                            <div class="mt-3 p-3 bg-gradient-to-r from-blue-50 to-pink-50 rounded-md border">
+                                <div class="text-sm font-medium text-center">
+                                    <span class="team-big-boys">${getTeamDisplayName('team1')}: ${team1Handicap}</span>
+                                    <span class="text-gray-600 mx-2">vs</span>
+                                    <span class="team-putt-pirates">${getTeamDisplayName('team2')}: ${team2Handicap}</span>
                                 </div>
                             </div>
                         </div>
@@ -575,8 +635,8 @@
             progressBar.style.width = `${(currentHole / 18) * 100}%`;
             
             // Update team names
-            const team1Name = match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ');
-            const team2Name = match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ');
+            const team1Name = `${getTeamDisplayName('team1')} - ${match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ')}`;
+            const team2Name = `${getTeamDisplayName('team2')} - ${match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ')}`;
             document.getElementById('team1-name').textContent = team1Name;
             document.getElementById('team2-name').textContent = team2Name;
             
