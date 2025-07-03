@@ -447,21 +447,25 @@
                     
                     let statusDisplay = '';
                     if (matchStatus) {
-                        let statusClass = 'match-status-neutral';
+                        let statusStyle = '';
                         let statusText = matchStatus.description;
                         
                         if (matchStatus.status === 'completed') {
-                            statusClass = matchStatus.winner === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
+                            statusStyle = matchStatus.winner === 'team1' ? 
+                                'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                                'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
                             statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
                         } else if (matchStatus.status === 'tied') {
-                            statusClass = 'match-status-neutral';
+                            statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
                         } else if (matchStatus.leader) {
-                            statusClass = matchStatus.leader === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
+                            statusStyle = matchStatus.leader === 'team1' ? 
+                                'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                                'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
                             statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
                         }
                         
                         statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md text-center">
-                            <div class="inline-block ${statusClass}">${statusText}</div>
+                            <div style="${statusStyle} display: inline-block;">${statusText}</div>
                         </div>`;
                     }
                     
@@ -705,13 +709,13 @@
                 
                 if (result === 'team1') {
                     resultText.textContent = `${getTeamDisplayName('team1')} Wins Hole`;
-                    resultText.className = 'inline-block team-big-boys-filled';
+                    resultText.style.cssText = 'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600; display: inline-block;';
                 } else if (result === 'team2') {
                     resultText.textContent = `${getTeamDisplayName('team2')} Wins Hole`;
-                    resultText.className = 'inline-block team-putt-pirates-filled';
+                    resultText.style.cssText = 'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600; display: inline-block;';
                 } else {
                     resultText.textContent = 'Hole Tied';
-                    resultText.className = 'inline-block match-status-neutral';
+                    resultText.style.cssText = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600; display: inline-block;';
                 }
             } else {
                 resultDiv.classList.add('hidden');
@@ -725,20 +729,24 @@
             const statusDiv = document.getElementById('match-status');
             const handicapsDiv = document.getElementById('match-handicaps');
             
-            let statusClass = 'match-status-neutral';
+            let statusStyle = '';
             let statusText = matchStatus.description;
             
             if (matchStatus.status === 'completed') {
-                statusClass = matchStatus.winner === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
+                statusStyle = matchStatus.winner === 'team1' ? 
+                    'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                    'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
                 statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
             } else if (matchStatus.status === 'tied') {
-                statusClass = 'match-status-neutral';
+                statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
             } else if (matchStatus.leader) {
-                statusClass = matchStatus.leader === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
+                statusStyle = matchStatus.leader === 'team1' ? 
+                    'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                    'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
                 statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
             }
             
-            statusDiv.innerHTML = `<div class="text-center"><span class="${statusClass}">${statusText}</span></div>`;
+            statusDiv.innerHTML = `<div class="text-center"><span style="${statusStyle} display: inline-block;">${statusText}</span></div>`;
             handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap}</span>`;
         }
 
