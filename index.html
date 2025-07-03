@@ -20,7 +20,7 @@
             messagingSenderId: "562081690576",
             appId: "1:562081690576:web:f300b79fefa98af948bfd5"
         };
-    
+
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
@@ -393,11 +393,16 @@
                 onValue(tournamentRef, (snapshot) => {
                     if (snapshot.exists()) {
                         tournament = snapshot.val();
-                        console.log('Tournament data loaded from Firebase');
+                        console.log('Tournament data loaded from Firebase:', tournament);
                     } else {
+                        console.log('No tournament data found, initializing with defaults');
+                        tournament = JSON.parse(JSON.stringify(initialTournament));
                         // Initialize with default tournament structure
-                        saveToFirebase('tournament', initialTournament);
+                        saveToFirebase('tournament', tournament);
                     }
+                    
+                    // Initialize match scores after tournament data is loaded
+                    initializeMatchScores();
                     renderCurrentView();
                 });
 
@@ -406,8 +411,9 @@
                 onValue(scoresRef, (snapshot) => {
                     if (snapshot.exists()) {
                         matchScores = snapshot.val();
-                        console.log('Match scores loaded from Firebase');
+                        console.log('Match scores loaded from Firebase:', matchScores);
                     } else {
+                        console.log('No match scores found, initializing empty scores');
                         // Initialize empty scores
                         initializeMatchScores();
                     }
@@ -426,8 +432,9 @@
         function initializeLocalMode() {
             firebaseEnabled = false;
             updateConnectionStatus(false);
+            tournament = JSON.parse(JSON.stringify(initialTournament));
             initializeMatchScores();
-            renderCurrentView();
+            switchView('dashboard'); // Ensure dashboard is shown
         }
 
         async function saveToFirebase(path, data) {
@@ -581,7 +588,10 @@
             const grid = document.getElementById('matches-grid');
             grid.innerHTML = '';
             
+            console.log('Rendering dashboard with tournament data:', tournament);
+            
             Object.values(tournament).forEach(day => {
+                console.log('Processing day:', day);
                 day.matches.forEach(match => {
                     const matchDiv = document.createElement('div');
                     matchDiv.className = 'bg-white rounded-lg shadow-lg p-6 border-2 border-gray-200';
@@ -944,12 +954,13 @@
         }
 
         function renderCurrentView() {
+            // Ensure we're showing the correct view
             if (currentView === 'dashboard') {
-                renderDashboard();
+                switchView('dashboard');
             } else if (currentView === 'setup') {
-                renderSetup();
+                switchView('setup');
             } else if (currentView === 'scoring') {
-                updateScoringInterface();
+                switchView('scoring');
             }
         }
 
@@ -1072,6 +1083,9 @@
                     quickScore(team, score);
                 };
             });
+            
+            // Set initial view to dashboard
+            currentView = 'dashboard';
             
             // Initialize Firebase or local mode
             setTimeout(() => {
