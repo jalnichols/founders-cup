@@ -122,6 +122,9 @@
                     <button id="nav-setup" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                         👥 Setup
                     </button>
+                    <button id="nav-data" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                        🗂️ Data Management
+                    </button>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div id="connection-status" class="text-sm text-gray-500">
@@ -137,13 +140,7 @@
         
         <!-- Tournament Dashboard -->
         <div id="dashboard-view" class="space-y-6">
-            <div class="flex items-center space-x-3 mb-6">
-                <span class="text-4xl">🏆</span>
-                <h1 class="text-3xl font-bold text-gray-900">Tournament Dashboard</h1>
-            </div>
-            <div id="matches-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                <!-- Matches will be populated here -->
-            </div>
+            <!-- Content will be dynamically generated -->
         </div>
 
         <!-- Tournament Setup -->
@@ -154,6 +151,32 @@
             </div>
             <div id="setup-content">
                 <!-- Setup content will be populated here -->
+            </div>
+        </div>
+
+        <!-- Data Management -->
+        <div id="data-view" class="space-y-6 hidden">
+            <div class="flex items-center space-x-3 mb-6">
+                <span class="text-4xl">🗂️</span>
+                <h1 class="text-3xl font-bold text-gray-900">Data Management</h1>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-semibold text-red-800 mb-2">⚠️ Warning</h3>
+                    <p class="text-red-700">This will permanently delete all tournament data including player assignments, match scores, and reset everything to the beginning state. This action cannot be undone.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Enter password to proceed:</label>
+                        <input id="data-password" type="password" placeholder="Enter password" class="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    </div>
+                    
+                    <button id="wipe-data-btn" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed" onclick="wipeAllData()">
+                        🗑️ Wipe All Data & Reset Tournament
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -387,6 +410,55 @@
             }
         }
 
+        // Data Management functions
+        async function wipeAllData() {
+            const password = document.getElementById('data-password').value;
+            
+            if (password !== '17843') {
+                alert('Incorrect password. Access denied.');
+                return;
+            }
+            
+            const confirmation = confirm('Are you absolutely sure you want to wipe ALL tournament data? This cannot be undone.');
+            if (!confirmation) {
+                return;
+            }
+            
+            console.log('Wiping all tournament data...');
+            
+            try {
+                // Reset tournament to initial state
+                tournament = JSON.parse(JSON.stringify(initialTournament));
+                
+                // Reset match scores
+                matchScores = {};
+                
+                // Initialize match scores with empty data
+                initializeMatchScores();
+                
+                // Save to Firebase
+                if (firebaseEnabled) {
+                    await saveToFirebase('tournament', tournament);
+                    await saveToFirebase('matchScores', matchScores);
+                }
+                
+                // Clear password field
+                document.getElementById('data-password').value = '';
+                
+                // Show success message
+                alert('All tournament data has been wiped and reset to initial state.');
+                
+                // Redirect to dashboard
+                switchView('dashboard');
+                
+                console.log('Tournament data wiped successfully');
+                
+            } catch (error) {
+                console.error('Error wiping data:', error);
+                alert('Error wiping data. Please try again.');
+            }
+        }
+
         async function saveToFirebase(path, data) {
             if (!firebaseEnabled) return;
             
@@ -567,9 +639,124 @@
         }
 
         // Render functions
+        function calculateTournamentScoreboard() {
+            let bigBoysWins = 0;
+            let pittPiratesWins = 0;
+            let bigBoysLeads = 0;
+            let pittPiratesLeads = 0;
+            let totalMatches = 0;
+            let completedMatches = 0;
+            
+            Object.values(tournament).forEach(day => {
+                day.matches.forEach(match => {
+                    totalMatches++;
+                    const scores = matchScores[match.id];
+                    
+                    if (scores && scores.team1 && scores.team2) {
+                        const matchStatus = calculateMatchStatus(scores);
+                        
+                        if (matchStatus.status === 'completed') {
+                            completedMatches++;
+                            if (matchStatus.winner === 'team1') {
+                                bigBoysWins++;
+                            } else if (matchStatus.winner === 'team2') {
+                                pittPiratesWins++;
+                            }
+                        } else if (matchStatus.status === 'playing' && matchStatus.leader) {
+                            if (matchStatus.leader === 'team1') {
+                                bigBoysLeads++;
+                            } else if (matchStatus.leader === 'team2') {
+                                pittPiratesLeads++;
+                            }
+                        }
+                    }
+                });
+            });
+            
+            return {
+                bigBoysWins,
+                pittPiratesWins,
+                bigBoysLeads,
+                pittPiratesLeads,
+                totalMatches,
+                completedMatches
+            };
+        }
+
+        function renderTournamentScoreboard() {
+            const scoreboard = calculateTournamentScoreboard();
+            
+            return `
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">Tournament Scoreboard</h2>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Big Boys -->
+                        <div class="text-center">
+                            <h3 class="text-xl font-semibold team-big-boys mb-2">${getTeamDisplayName('team1')}</h3>
+                            <div class="space-y-2">
+                                <div class="bg-blue-50 rounded-lg p-3">
+                                    <div class="text-2xl font-bold text-blue-600">${scoreboard.bigBoysWins}</div>
+                                    <div class="text-sm text-blue-600">Matches Won</div>
+                                </div>
+                                <div class="bg-blue-50 rounded-lg p-3">
+                                    <div class="text-xl font-semibold text-blue-600">${scoreboard.bigBoysLeads}</div>
+                                    <div class="text-sm text-blue-600">Currently Leading</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Putt Pirates -->
+                        <div class="text-center">
+                            <h3 class="text-xl font-semibold team-putt-pirates mb-2">${getTeamDisplayName('team2')}</h3>
+                            <div class="space-y-2">
+                                <div class="bg-pink-50 rounded-lg p-3">
+                                    <div class="text-2xl font-bold text-pink-600">${scoreboard.pittPiratesWins}</div>
+                                    <div class="text-sm text-pink-600">Matches Won</div>
+                                </div>
+                                <div class="bg-pink-50 rounded-lg p-3">
+                                    <div class="text-xl font-semibold text-pink-600">${scoreboard.pittPiratesLeads}</div>
+                                    <div class="text-sm text-pink-600">Currently Leading</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4 text-sm text-gray-600">
+                        ${scoreboard.completedMatches} of ${scoreboard.totalMatches} matches completed
+                    </div>
+                </div>
+            `;
+        }
+
         function renderDashboard() {
+            const dashboardView = document.getElementById('dashboard-view');
+            
+            // Clear existing content
+            dashboardView.innerHTML = '';
+            
+            // Add title
+            const titleHTML = `
+                <div class="flex items-center space-x-3 mb-6">
+                    <span class="text-4xl">🏆</span>
+                    <h1 class="text-3xl font-bold text-gray-900">Tournament Dashboard</h1>
+                </div>
+            `;
+            
+            // Add scoreboard
+            const scoreboardHTML = renderTournamentScoreboard();
+            
+            // Add matches grid container
+            const matchesGridHTML = `
+                <div id="matches-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Matches will be populated here -->
+                </div>
+            `;
+            
+            dashboardView.innerHTML = titleHTML + scoreboardHTML + matchesGridHTML;
+            
+            // Now populate the matches grid
             const grid = document.getElementById('matches-grid');
-            grid.innerHTML = '';
             
             console.log('Rendering dashboard with tournament data:', tournament);
             
@@ -655,7 +842,7 @@
                             </div>
                         </div>
                         ${statusDisplay}
-                        <button class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium" onclick="openMatch('${match.id}')">
+                        <button class="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 font-medium" style="background-color: #DAF7A6; color: #2d5016;" onclick="openMatch('${match.id}')">
                             ⚡ Score Match
                         </button>
                     `;
@@ -1001,10 +1188,12 @@
             
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('setup-view').classList.add('hidden');
+            document.getElementById('data-view').classList.add('hidden');
             document.getElementById('scoring-view').classList.add('hidden');
             
             document.getElementById('nav-dashboard').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             document.getElementById('nav-setup').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            document.getElementById('nav-data').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
             
             if (view === 'dashboard') {
                 document.getElementById('dashboard-view').classList.remove('hidden');
@@ -1014,6 +1203,9 @@
                 document.getElementById('setup-view').classList.remove('hidden');
                 document.getElementById('nav-setup').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600';
                 renderSetup();
+            } else if (view === 'data') {
+                document.getElementById('data-view').classList.remove('hidden');
+                document.getElementById('nav-data').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600';
             } else if (view === 'scoring') {
                 document.getElementById('scoring-view').classList.remove('hidden');
                 // Delay the updateScoringInterface call to ensure DOM elements exist
@@ -1031,6 +1223,8 @@
                 switchView('dashboard');
             } else if (currentView === 'setup') {
                 switchView('setup');
+            } else if (currentView === 'data') {
+                switchView('data');
             } else if (currentView === 'scoring') {
                 switchView('scoring');
             }
@@ -1173,6 +1367,7 @@
             // Set up navigation event listeners
             document.getElementById('nav-dashboard').onclick = () => switchView('dashboard');
             document.getElementById('nav-setup').onclick = () => switchView('setup');
+            document.getElementById('nav-data').onclick = () => switchView('data');
             document.getElementById('back-to-dashboard').onclick = () => switchView('dashboard');
             
             // Set up hole navigation event listeners
