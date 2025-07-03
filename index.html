@@ -107,31 +107,10 @@
         .btn-team-putt-pirates {
             @apply bg-pink-600 text-white hover:bg-pink-700;
         }
-        .firebase-loading {
-            @apply fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50;
-        }
-        .firebase-error {
-            @apply bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4;
-        }
     </style>
 </head>
 <body class="bg-gray-50">
     
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="firebase-loading">
-        <div class="bg-white p-8 rounded-lg shadow-lg text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading Tournament Data...</p>
-        </div>
-    </div>
-
-    <!-- Firebase Configuration Warning -->
-    <div id="firebase-warning" class="firebase-error hidden">
-        <strong>Firebase Configuration Needed!</strong> 
-        Please update the Firebase configuration in the HTML file with your actual project settings.
-        <button onclick="dismissFirebaseWarning()" class="ml-4 text-red-800 underline">Dismiss</button>
-    </div>
-
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b mb-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -285,26 +264,6 @@
     </div>
 
     <script>
-        // Check if Firebase is properly configured
-        function checkFirebaseConfig() {
-            console.log('Checking Firebase configuration...');
-            const config = window.firebase;
-            if (!config || !config.database) {
-                console.log('Firebase not available, showing warning');
-                document.getElementById('firebase-warning').classList.remove('hidden');
-                document.getElementById('loading-screen').classList.add('hidden');
-                return false;
-            }
-            console.log('Firebase configuration found');
-            return true;
-        }
-
-        function dismissFirebaseWarning() {
-            console.log('Firebase warning dismissed, starting local mode');
-            document.getElementById('firebase-warning').classList.add('hidden');
-            initializeLocalMode();
-        }
-
         function updateConnectionStatus(connected) {
             const indicator = document.getElementById('status-indicator');
             const text = document.getElementById('status-text');
@@ -378,10 +337,6 @@
 
         // Firebase functions
         async function initializeFirebase() {
-            if (!checkFirebaseConfig()) {
-                return;
-            }
-
             try {
                 firebaseEnabled = true;
                 const { database, ref, onValue } = window.firebase;
@@ -405,7 +360,6 @@
                     } else {
                         console.log('No tournament data found, initializing with defaults');
                         tournament = JSON.parse(JSON.stringify(initialTournament));
-                        // Initialize with default tournament structure
                         saveToFirebase('tournament', tournament);
                     }
                     
@@ -422,47 +376,15 @@
                         console.log('Match scores loaded from Firebase:', matchScores);
                     } else {
                         console.log('No match scores found, initializing empty scores');
-                        // Initialize empty scores
                         initializeMatchScores();
                     }
                     renderCurrentView();
                 });
-
-                document.getElementById('loading-screen').classList.add('hidden');
                 
             } catch (error) {
                 console.error('Firebase initialization error:', error);
-                document.getElementById('loading-screen').classList.add('hidden');
-                initializeLocalMode();
+                updateConnectionStatus(false);
             }
-        }
-
-        function initializeLocalMode() {
-            console.log('Initializing local mode - Firebase not available');
-            firebaseEnabled = false;
-            updateConnectionStatus(false);
-            tournament = JSON.parse(JSON.stringify(initialTournament));
-            initializeMatchScores();
-            switchView('dashboard'); // Ensure dashboard is shown
-        }
-
-        // Add a fallback initialization after a delay
-        function initializeFallback() {
-            console.log('Fallback initialization triggered');
-            if (!firebaseEnabled) {
-                console.log('Firebase not enabled, using local mode');
-                initializeLocalMode();
-            } else {
-                console.log('Firebase is enabled, no fallback needed');
-            }
-        }
-
-        // Initialize immediately for testing
-        function initializeImmediate() {
-            console.log('Immediate initialization for testing');
-            tournament = JSON.parse(JSON.stringify(initialTournament));
-            initializeMatchScores();
-            renderDashboard();
         }
 
         async function saveToFirebase(path, data) {
@@ -1117,19 +1039,11 @@
             // Set initial view to dashboard
             currentView = 'dashboard';
             
-            // Initialize immediately with default data so dashboard shows up
-            initializeImmediate();
-            
-            // Initialize Firebase or local mode
+            // Initialize Firebase
             console.log('Attempting Firebase initialization...');
             setTimeout(() => {
                 initializeFirebase();
-            }, 1000); // Small delay to ensure Firebase SDK is loaded
-            
-            // Fallback initialization in case Firebase fails
-            setTimeout(() => {
-                initializeFallback();
-            }, 5000); // 5 second fallback
+            }, 1000);
         }
 
         // Start the app
