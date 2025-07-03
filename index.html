@@ -216,12 +216,12 @@
                             <div class="text-sm text-blue-600">strokes</div>
                         </div>
                         <div id="team1-buttons" class="grid grid-cols-6 gap-2">
-                            <button class="btn-quick-score" data-team="1" data-score="3">3</button>
-                            <button class="btn-quick-score" data-team="1" data-score="4">4</button>
-                            <button class="btn-quick-score" data-team="1" data-score="5">5</button>
-                            <button class="btn-quick-score" data-team="1" data-score="6">6</button>
-                            <button class="btn-quick-score" data-team="1" data-score="7">7</button>
-                            <button class="btn-quick-score" data-team="1" data-score="8">8</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 3)">3</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 4)">4</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 5)">5</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 6)">6</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 7)">7</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(1, 8)">8</button>
                         </div>
                     </div>
 
@@ -233,12 +233,12 @@
                             <div class="text-sm text-pink-600">strokes</div>
                         </div>
                         <div id="team2-buttons" class="grid grid-cols-6 gap-2">
-                            <button class="btn-quick-score" data-team="2" data-score="3">3</button>
-                            <button class="btn-quick-score" data-team="2" data-score="4">4</button>
-                            <button class="btn-quick-score" data-team="2" data-score="5">5</button>
-                            <button class="btn-quick-score" data-team="2" data-score="6">6</button>
-                            <button class="btn-quick-score" data-team="2" data-score="7">7</button>
-                            <button class="btn-quick-score" data-team="2" data-score="8">8</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 3)">3</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 4)">4</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 5)">5</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 6)">6</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 7)">7</button>
+                            <button class="btn-quick-score h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" onclick="quickScore(2, 8)">8</button>
                         </div>
                     </div>
 
@@ -813,12 +813,25 @@
         }
 
         function updateScoringInterface() {
+            console.log('updateScoringInterface called');
+            
             const match = findMatch(currentMatch);
             const scores = matchScores[currentMatch];
             
-            if (!match || !scores) {
-                console.log('Match or scores not found for:', currentMatch);
+            if (!match) {
+                console.log('Match not found for:', currentMatch);
                 return;
+            }
+            
+            // Ensure scores exist
+            if (!scores) {
+                console.log('Creating new scores object for match:', currentMatch);
+                matchScores[currentMatch] = {
+                    team1: {},
+                    team2: {},
+                    team1Handicap: 0,
+                    team2Handicap: 0
+                };
             }
             
             // Update hole display
@@ -836,21 +849,38 @@
             document.getElementById('team2-name').textContent = team2Name;
             
             // Update score inputs
-            document.getElementById('team1-score').value = scores.team1[currentHole] || '';
-            document.getElementById('team2-score').value = scores.team2[currentHole] || '';
+            const team1Input = document.getElementById('team1-score');
+            const team2Input = document.getElementById('team2-score');
+            
+            if (team1Input) {
+                team1Input.value = scores.team1[currentHole] || '';
+                // Remove any existing event listeners and add new ones
+                team1Input.onchange = (e) => {
+                    console.log('Team1 input changed:', e.target.value);
+                    updateScore(1, currentHole, e.target.value);
+                };
+                team1Input.oninput = (e) => {
+                    console.log('Team1 input typing:', e.target.value);
+                    updateScore(1, currentHole, e.target.value);
+                };
+            }
+            
+            if (team2Input) {
+                team2Input.value = scores.team2[currentHole] || '';
+                // Remove any existing event listeners and add new ones
+                team2Input.onchange = (e) => {
+                    console.log('Team2 input changed:', e.target.value);
+                    updateScore(2, currentHole, e.target.value);
+                };
+                team2Input.oninput = (e) => {
+                    console.log('Team2 input typing:', e.target.value);
+                    updateScore(2, currentHole, e.target.value);
+                };
+            }
             
             // Update quick score buttons
             updateQuickScoreButtons(1, scores.team1[currentHole]);
             updateQuickScoreButtons(2, scores.team2[currentHole]);
-            
-            // Re-attach event listeners to quick score buttons
-            document.querySelectorAll('.btn-quick-score').forEach(button => {
-                button.onclick = () => {
-                    const team = button.dataset.team;
-                    const score = button.dataset.score;
-                    quickScore(team, score);
-                };
-            });
             
             // Update hole result
             updateHoleResult();
@@ -879,17 +909,25 @@
         function updateHoleResult() {
             const scores = matchScores[currentMatch];
             
-            // Safety check
-            if (!scores || !scores.team1 || !scores.team2) {
-                console.log('Match scores not properly initialized for hole result');
+            if (!scores) {
+                console.log('No scores found for hole result');
                 return;
             }
+            
+            // Ensure team objects exist
+            if (!scores.team1) scores.team1 = {};
+            if (!scores.team2) scores.team2 = {};
             
             const team1Score = scores.team1[currentHole];
             const team2Score = scores.team2[currentHole];
             
             const resultDiv = document.getElementById('hole-result');
             const resultText = document.getElementById('hole-result-text');
+            
+            if (!resultDiv || !resultText) {
+                console.log('Result divs not found');
+                return;
+            }
             
             if (team1Score && team2Score) {
                 const result = calculateHoleResult(team1Score, team2Score);
@@ -905,6 +943,8 @@
                     resultText.textContent = 'Hole Tied';
                     resultText.style.cssText = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600; display: inline-block;';
                 }
+                
+                console.log('Hole result updated:', result);
             } else {
                 resultDiv.classList.add('hidden');
             }
@@ -913,12 +953,14 @@
         function updateMatchStatus() {
             const scores = matchScores[currentMatch];
             
-            // Safety check - initialize if needed
-            if (!scores || !scores.team1 || !scores.team2) {
-                console.log('Match scores not properly initialized for match status, initializing...');
-                initializeMatchScores();
+            if (!scores) {
+                console.log('No scores found for match status');
                 return;
             }
+            
+            // Ensure team objects exist
+            if (!scores.team1) scores.team1 = {};
+            if (!scores.team2) scores.team2 = {};
             
             const matchStatus = calculateMatchStatus(scores);
             
@@ -949,6 +991,8 @@
             
             statusDiv.innerHTML = `<div class="text-center"><span style="${statusStyle} display: inline-block;">${statusText}</span></div>`;
             handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap || 0}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap || 0}</span>`;
+            
+            console.log('Match status updated:', statusText);
         }
 
         // Event handlers
@@ -1037,11 +1081,16 @@
         }
 
         function openMatch(matchId) {
+            console.log('Opening match:', matchId);
+            
             currentMatch = matchId;
             currentHole = 1;
             
             const match = findMatch(matchId);
-            if (!match) return;
+            if (!match) {
+                console.log('Match not found:', matchId);
+                return;
+            }
             
             // Update match display
             document.getElementById('match-title').textContent = match.name;
@@ -1051,27 +1100,18 @@
             const playersText = `${getTeamDisplayName('team1')} (${team1Players}) vs ${getTeamDisplayName('team2')} (${team2Players})`;
             document.getElementById('match-players').textContent = playersText;
             
-            switchView('scoring');
+            // Initialize scores if they don't exist
+            if (!matchScores[matchId]) {
+                console.log('Creating new scores for match:', matchId);
+                matchScores[matchId] = {
+                    team1: {},
+                    team2: {},
+                    team1Handicap: 0,
+                    team2Handicap: 0
+                };
+            }
             
-            // Set up event listeners for scoring inputs after the view is switched
-            setTimeout(() => {
-                const team1Input = document.getElementById('team1-score');
-                const team2Input = document.getElementById('team2-score');
-                
-                if (team1Input) {
-                    team1Input.oninput = (e) => {
-                        console.log('Team 1 score input:', e.target.value);
-                        updateScore(1, currentHole, e.target.value);
-                    };
-                }
-                
-                if (team2Input) {
-                    team2Input.oninput = (e) => {
-                        console.log('Team 2 score input:', e.target.value);
-                        updateScore(2, currentHole, e.target.value);
-                    };
-                }
-            }, 100);
+            switchView('scoring');
         }
 
         function goToHole(hole) {
@@ -1081,28 +1121,48 @@
         }
 
         async function updateScore(team, hole, score) {
-            const scores = matchScores[currentMatch];
+            console.log(`updateScore called: team=${team}, hole=${hole}, score=${score}`);
             
-            if (!scores || !scores.team1 || !scores.team2) {
-                console.log('Match scores not properly initialized, initializing now');
-                initializeMatchScores();
+            if (!currentMatch) {
+                console.log('No current match selected');
                 return;
             }
+            
+            let scores = matchScores[currentMatch];
+            if (!scores) {
+                console.log('No scores found for match, creating new scores object');
+                scores = {
+                    team1: {},
+                    team2: {},
+                    team1Handicap: 0,
+                    team2Handicap: 0
+                };
+                matchScores[currentMatch] = scores;
+            }
+            
+            // Ensure team objects exist
+            if (!scores.team1) scores.team1 = {};
+            if (!scores.team2) scores.team2 = {};
             
             const parsedScore = parseInt(score) || 0;
             scores[`team${team}`][hole] = parsedScore;
             
-            console.log(`Updated score: Team ${team}, Hole ${hole}, Score ${parsedScore}`);
+            console.log(`Score updated: ${JSON.stringify(scores)}`);
             
-            // Save to Firebase
-            await updateFirebase('matchScores', { [currentMatch]: scores });
+            // Update Firebase
+            try {
+                await updateFirebase('matchScores', { [currentMatch]: scores });
+                console.log('Score saved to Firebase');
+            } catch (error) {
+                console.error('Error saving to Firebase:', error);
+            }
             
-            // Update the interface
+            // Update the interface immediately
             updateScoringInterface();
         }
 
         function quickScore(team, score) {
-            console.log('Quick score clicked:', team, score, 'for hole', currentHole);
+            console.log(`quickScore called: team=${team}, score=${score}, currentHole=${currentHole}`);
             updateScore(team, currentHole, score);
         }
 
