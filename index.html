@@ -287,16 +287,20 @@
     <script>
         // Check if Firebase is properly configured
         function checkFirebaseConfig() {
+            console.log('Checking Firebase configuration...');
             const config = window.firebase;
             if (!config || !config.database) {
+                console.log('Firebase not available, showing warning');
                 document.getElementById('firebase-warning').classList.remove('hidden');
                 document.getElementById('loading-screen').classList.add('hidden');
                 return false;
             }
+            console.log('Firebase configuration found');
             return true;
         }
 
         function dismissFirebaseWarning() {
+            console.log('Firebase warning dismissed, starting local mode');
             document.getElementById('firebase-warning').classList.add('hidden');
             initializeLocalMode();
         }
@@ -382,10 +386,14 @@
                 firebaseEnabled = true;
                 const { database, ref, onValue } = window.firebase;
                 
+                console.log('Firebase initialized successfully');
+                
                 // Listen for connection status
                 const connectedRef = ref(database, '.info/connected');
                 onValue(connectedRef, (snapshot) => {
-                    updateConnectionStatus(snapshot.val());
+                    const connected = snapshot.val();
+                    console.log('Firebase connection status:', connected);
+                    updateConnectionStatus(connected);
                 });
 
                 // Load tournament data
@@ -430,11 +438,31 @@
         }
 
         function initializeLocalMode() {
+            console.log('Initializing local mode - Firebase not available');
             firebaseEnabled = false;
             updateConnectionStatus(false);
             tournament = JSON.parse(JSON.stringify(initialTournament));
             initializeMatchScores();
             switchView('dashboard'); // Ensure dashboard is shown
+        }
+
+        // Add a fallback initialization after a delay
+        function initializeFallback() {
+            console.log('Fallback initialization triggered');
+            if (!firebaseEnabled) {
+                console.log('Firebase not enabled, using local mode');
+                initializeLocalMode();
+            } else {
+                console.log('Firebase is enabled, no fallback needed');
+            }
+        }
+
+        // Initialize immediately for testing
+        function initializeImmediate() {
+            console.log('Immediate initialization for testing');
+            tournament = JSON.parse(JSON.stringify(initialTournament));
+            initializeMatchScores();
+            renderDashboard();
         }
 
         async function saveToFirebase(path, data) {
@@ -1047,6 +1075,8 @@
 
         // Initialize app
         function init() {
+            console.log('Starting app initialization');
+            
             // Set up event listeners
             document.getElementById('nav-dashboard').onclick = () => switchView('dashboard');
             document.getElementById('nav-setup').onclick = () => switchView('setup');
@@ -1087,10 +1117,19 @@
             // Set initial view to dashboard
             currentView = 'dashboard';
             
+            // Initialize immediately with default data so dashboard shows up
+            initializeImmediate();
+            
             // Initialize Firebase or local mode
+            console.log('Attempting Firebase initialization...');
             setTimeout(() => {
                 initializeFirebase();
             }, 1000); // Small delay to ensure Firebase SDK is loaded
+            
+            // Fallback initialization in case Firebase fails
+            setTimeout(() => {
+                initializeFallback();
+            }, 5000); // 5 second fallback
         }
 
         // Start the app
