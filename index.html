@@ -458,6 +458,11 @@
         }
 
         function calculateMatchStatus(scores) {
+            // Safety check - make sure scores object exists and has the right structure
+            if (!scores || !scores.team1 || !scores.team2) {
+                return { status: 'playing', description: 'All Square' };
+            }
+            
             let team1Up = 0;
             let holesPlayed = 0;
             
@@ -515,18 +520,46 @@
 
         // Initialize match scores
         function initializeMatchScores() {
+            console.log('Initializing match scores...');
+            
             Object.values(tournament).forEach(day => {
                 day.matches.forEach(match => {
                     if (!matchScores[match.id]) {
+                        console.log(`Creating scores for match: ${match.id}`);
                         matchScores[match.id] = {
                             team1: {},
                             team2: {},
                             team1Handicap: 0,
                             team2Handicap: 0
                         };
+                    } else {
+                        // Ensure the structure exists even if partially loaded from Firebase
+                        if (!matchScores[match.id].team1) {
+                            matchScores[match.id].team1 = {};
+                        }
+                        if (!matchScores[match.id].team2) {
+                            matchScores[match.id].team2 = {};
+                        }
+                        if (matchScores[match.id].team1Handicap === undefined) {
+                            matchScores[match.id].team1Handicap = 0;
+                        }
+                        if (matchScores[match.id].team2Handicap === undefined) {
+                            matchScores[match.id].team2Handicap = 0;
+                        }
+                    }
+                    
+                    // Update handicaps
+                    if (match.type === 'singles') {
+                        matchScores[match.id].team1Handicap = getPlayerHandicap(match.team1Player, day.course, 'singles');
+                        matchScores[match.id].team2Handicap = getPlayerHandicap(match.team2Player, day.course, 'singles');
+                    } else {
+                        matchScores[match.id].team1Handicap = getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course);
+                        matchScores[match.id].team2Handicap = getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course);
                     }
                 });
             });
+            
+            console.log('Match scores initialized:', matchScores);
             
             if (firebaseEnabled) {
                 saveToFirebase('matchScores', matchScores);
@@ -571,7 +604,12 @@
                     }
                     
                     const scores = matchScores[match.id];
-                    const matchStatus = scores ? calculateMatchStatus(scores) : null;
+                    let matchStatus = null;
+                    
+                    // Only calculate match status if scores exist and are properly structured
+                    if (scores && scores.team1 && scores.team2) {
+                        matchStatus = calculateMatchStatus(scores);
+                    }
                     
                     let statusDisplay = '';
                     if (matchStatus) {
@@ -825,6 +863,13 @@
 
         function updateHoleResult() {
             const scores = matchScores[currentMatch];
+            
+            // Safety check
+            if (!scores || !scores.team1 || !scores.team2) {
+                console.log('Match scores not properly initialized for hole result');
+                return;
+            }
+            
             const team1Score = scores.team1[currentHole];
             const team2Score = scores.team2[currentHole];
             
@@ -852,6 +897,13 @@
 
         function updateMatchStatus() {
             const scores = matchScores[currentMatch];
+            
+            // Safety check
+            if (!scores || !scores.team1 || !scores.team2) {
+                console.log('Match scores not properly initialized for:', currentMatch);
+                return;
+            }
+            
             const matchStatus = calculateMatchStatus(scores);
             
             const statusDiv = document.getElementById('match-status');
