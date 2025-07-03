@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Founders Cup Scoring</title>
+    <title>Golf Tournament Scoring System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -42,6 +42,15 @@
         .team-putt-pirates {
             @apply text-pink-600;
         }
+        .team-big-boys-filled {
+            @apply bg-blue-600 text-white px-3 py-1 rounded-full font-semibold;
+        }
+        .team-putt-pirates-filled {
+            @apply bg-pink-600 text-black px-3 py-1 rounded-full font-semibold;
+        }
+        .match-status-neutral {
+            @apply bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-semibold;
+        }
         .bg-team-big-boys {
             @apply bg-blue-50 border-blue-200;
         }
@@ -69,10 +78,10 @@
             <div class="flex justify-between h-16">
                 <div class="flex space-x-8">
                     <button id="nav-dashboard" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
-                        🏆 Match Dashboard
+                        🏆 Dashboard
                     </button>
                     <button id="nav-setup" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                        👥 Match Setup
+                        👥 Setup
                     </button>
                 </div>
             </div>
@@ -81,7 +90,7 @@
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         
-        <!-- Match Dashboard -->
+        <!-- Tournament Dashboard -->
         <div id="dashboard-view" class="space-y-6">
             <div class="flex items-center space-x-3 mb-6">
                 <span class="text-4xl">🏆</span>
@@ -92,7 +101,7 @@
             </div>
         </div>
 
-        <!-- Match Setup -->
+        <!-- Tournament Setup -->
         <div id="setup-view" class="space-y-6 hidden">
             <div class="flex items-center space-x-3 mb-6">
                 <span class="text-4xl">👥</span>
@@ -321,9 +330,7 @@
                 if (scores.team1[hole] && scores.team2[hole]) {
                     const result = calculateHoleResult(
                         scores.team1[hole], 
-                        scores.team2[hole], 
-                        scores.team1Handicap || 0, 
-                        scores.team2Handicap || 0
+                        scores.team2[hole]
                     );
                     
                     if (result === 'team1') team1Up++;
@@ -425,21 +432,21 @@
                     
                     let statusDisplay = '';
                     if (matchStatus) {
-                        let statusClass = 'text-blue-600';
+                        let statusClass = 'match-status-neutral';
                         let statusText = matchStatus.description;
                         
                         if (matchStatus.status === 'completed') {
-                            statusClass = matchStatus.winner === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                            statusClass = matchStatus.winner === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
                             statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
                         } else if (matchStatus.status === 'tied') {
-                            statusClass = 'text-yellow-600';
+                            statusClass = 'match-status-neutral';
                         } else if (matchStatus.leader) {
-                            statusClass = matchStatus.leader === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                            statusClass = matchStatus.leader === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
                             statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
                         }
                         
-                        statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md">
-                            <div class="text-sm font-medium ${statusClass}">${statusText}</div>
+                        statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md text-center">
+                            <div class="inline-block ${statusClass}">${statusText}</div>
                         </div>`;
                     }
                     
@@ -678,18 +685,18 @@
             const resultText = document.getElementById('hole-result-text');
             
             if (team1Score && team2Score) {
-                const result = calculateHoleResult(team1Score, team2Score, scores.team1Handicap, scores.team2Handicap);
+                const result = calculateHoleResult(team1Score, team2Score);
                 resultDiv.classList.remove('hidden');
                 
                 if (result === 'team1') {
                     resultText.textContent = `${getTeamDisplayName('team1')} Wins Hole`;
-                    resultText.className = 'text-lg font-semibold text-blue-600';
+                    resultText.className = 'inline-block team-big-boys-filled';
                 } else if (result === 'team2') {
                     resultText.textContent = `${getTeamDisplayName('team2')} Wins Hole`;
-                    resultText.className = 'text-lg font-semibold text-pink-600';
+                    resultText.className = 'inline-block team-putt-pirates-filled';
                 } else {
                     resultText.textContent = 'Hole Tied';
-                    resultText.className = 'text-lg font-semibold text-yellow-600';
+                    resultText.className = 'inline-block match-status-neutral';
                 }
             } else {
                 resultDiv.classList.add('hidden');
@@ -703,20 +710,20 @@
             const statusDiv = document.getElementById('match-status');
             const handicapsDiv = document.getElementById('match-handicaps');
             
-            let statusClass = 'text-gray-600';
+            let statusClass = 'match-status-neutral';
             let statusText = matchStatus.description;
             
             if (matchStatus.status === 'completed') {
-                statusClass = matchStatus.winner === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                statusClass = matchStatus.winner === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
                 statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
             } else if (matchStatus.status === 'tied') {
-                statusClass = 'text-yellow-600';
+                statusClass = 'match-status-neutral';
             } else if (matchStatus.leader) {
-                statusClass = matchStatus.leader === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                statusClass = matchStatus.leader === 'team1' ? 'team-big-boys-filled' : 'team-putt-pirates-filled';
                 statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
             }
             
-            statusDiv.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+            statusDiv.innerHTML = `<div class="text-center"><span class="${statusClass}">${statusText}</span></div>`;
             handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap}</span>`;
         }
 
