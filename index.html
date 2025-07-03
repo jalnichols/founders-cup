@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golf Tournament Scoring System</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide-react/0.263.1/lucide-react.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -18,795 +14,795 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+        .hidden { display: none !important; }
+        .btn-primary {
+            @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium;
+        }
+        .btn-secondary {
+            @apply px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-medium;
+        }
+        .btn-quick-score {
+            @apply h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200;
+        }
+        .btn-quick-score.active {
+            @apply bg-blue-600 text-white;
+        }
+        .btn-hole-nav {
+            @apply h-12 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200;
+        }
+        .btn-hole-nav.active {
+            @apply bg-blue-600 text-white;
+        }
+        .btn-hole-nav.completed {
+            @apply bg-green-100 text-green-700;
+        }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b mb-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex space-x-8">
+                    <button id="nav-dashboard" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+                        🏆 Dashboard
+                    </button>
+                    <button id="nav-setup" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                        👥 Setup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { Users, Trophy, Target, Calendar, Plus, Edit3, Save, Eye } = lucide;
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        
+        <!-- Tournament Dashboard -->
+        <div id="dashboard-view" class="space-y-6">
+            <div class="flex items-center space-x-3 mb-6">
+                <span class="text-4xl">🏆</span>
+                <h1 class="text-3xl font-bold text-gray-900">Tournament Dashboard</h1>
+            </div>
+            <div id="matches-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Matches will be populated here -->
+            </div>
+        </div>
 
-        const GolfTournamentApp = () => {
-            // Handicap data embedded from CSV
-            const handicapData = [
-                { Name: "Kevin", TEAM: "team1", HANDICAP: 1, "MV SINGLES": 5, "MV DOUBLES LOW": 2, "MV DOUBLES HIGH": 0, "SL SINGLES": 5, "SL DOUBLES LOW": 2, "SL DOUBLES HIGH": 0 },
-                { Name: "Scott", TEAM: "team1", HANDICAP: 2, "MV SINGLES": 19, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 16, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 2 },
-                { Name: "Kranz", TEAM: "team1", HANDICAP: 3, "MV SINGLES": 19, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 16, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 2 },
-                { Name: "Pat", TEAM: "team1", HANDICAP: 4, "MV SINGLES": 31, "MV DOUBLES LOW": 11, "MV DOUBLES HIGH": 5, "SL SINGLES": 26, "SL DOUBLES LOW": 9, "SL DOUBLES HIGH": 4 },
-                { Name: "Jake", TEAM: "team1", HANDICAP: 5, "MV SINGLES": 44, "MV DOUBLES LOW": 0, "MV DOUBLES HIGH": 7, "SL SINGLES": 37, "SL DOUBLES LOW": 0, "SL DOUBLES HIGH": 5 },
-                { Name: "Noah", TEAM: "team2", HANDICAP: 1, "MV SINGLES": 8, "MV DOUBLES LOW": 3, "MV DOUBLES HIGH": 0, "SL SINGLES": 7, "SL DOUBLES LOW": 2, "SL DOUBLES HIGH": 0 },
-                { Name: "Brett", TEAM: "team2", HANDICAP: 2, "MV SINGLES": 16, "MV DOUBLES LOW": 6, "MV DOUBLES HIGH": 2, "SL SINGLES": 14, "SL DOUBLES LOW": 5, "SL DOUBLES HIGH": 2 },
-                { Name: "Brophy", TEAM: "team2", HANDICAP: 3, "MV SINGLES": 16, "MV DOUBLES LOW": 6, "MV DOUBLES HIGH": 2, "SL SINGLES": 14, "SL DOUBLES LOW": 5, "SL DOUBLES HIGH": 2 },
-                { Name: "Rath", TEAM: "team2", HANDICAP: 4, "MV SINGLES": 21, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 18, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 3 },
-                { Name: "Jeff", TEAM: "team2", HANDICAP: 5, "MV SINGLES": 37, "MV DOUBLES LOW": 0, "MV DOUBLES HIGH": 6, "SL SINGLES": 31, "SL DOUBLES LOW": 0, "SL DOUBLES HIGH": 5 }
-            ];
+        <!-- Tournament Setup -->
+        <div id="setup-view" class="space-y-6 hidden">
+            <div class="flex items-center space-x-3 mb-6">
+                <span class="text-4xl">👥</span>
+                <h1 class="text-3xl font-bold text-gray-900">Tournament Setup</h1>
+            </div>
+            <div id="setup-content">
+                <!-- Setup content will be populated here -->
+            </div>
+        </div>
 
-            const initialTournament = {
-                day1: {
-                    course: 'MV',
-                    matches: [
-                        { id: 'day1-singles', type: 'singles', name: 'Day 1 Singles', team1Player: '', team2Player: '' },
-                        { id: 'day1-doubles1', type: 'doubles', name: 'Day 1 Doubles 1', team1Players: ['', ''], team2Players: ['', ''] },
-                        { id: 'day1-doubles2', type: 'doubles', name: 'Day 1 Doubles 2', team1Players: ['', ''], team2Players: ['', ''] }
-                    ]
-                },
-                day2: {
-                    course: 'SL',
-                    matches: [
-                        { id: 'day2-singles', type: 'singles', name: 'Day 2 Singles', team1Player: '', team2Player: '' },
-                        { id: 'day2-doubles1', type: 'doubles', name: 'Day 2 Doubles 1', team1Players: ['', ''], team2Players: ['', ''] },
-                        { id: 'day2-doubles2', type: 'doubles', name: 'Day 2 Doubles 2', team1Players: ['', ''], team2Players: ['', ''] }
-                    ]
-                },
-                day3: {
-                    course: 'MV',
-                    matches: [
-                        { id: 'day3-singles1', type: 'singles', name: 'Day 3 Singles 1', team1Player: '', team2Player: '' },
-                        { id: 'day3-singles2', type: 'singles', name: 'Day 3 Singles 2', team1Player: '', team2Player: '' },
-                        { id: 'day3-singles3', type: 'singles', name: 'Day 3 Singles 3', team1Player: '', team2Player: '' },
-                        { id: 'day3-singles4', type: 'singles', name: 'Day 3 Singles 4', team1Player: '', team2Player: '' },
-                        { id: 'day3-singles5', type: 'singles', name: 'Day 3 Singles 5', team1Player: '', team2Player: '' }
-                    ]
+        <!-- Match Scoring -->
+        <div id="scoring-view" class="space-y-6 hidden">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 id="match-title" class="text-2xl md:text-3xl font-bold text-gray-900"></h1>
+                    <p id="match-players" class="text-gray-600 text-sm md:text-base"></p>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="toggle-view" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                        Mobile
+                    </button>
+                    <button id="back-to-dashboard" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+                        Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Match Status -->
+            <div class="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                <h2 class="text-lg md:text-xl font-semibold mb-4">Match Status</h2>
+                <div id="match-status" class="text-lg md:text-xl font-medium"></div>
+                <div id="match-handicaps" class="mt-2 text-sm text-gray-600"></div>
+            </div>
+
+            <!-- Mobile Scoring Interface -->
+            <div id="mobile-scoring" class="space-y-4">
+                <!-- Hole Navigation -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <button id="prev-hole" class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed text-lg font-medium">
+                            ← Prev
+                        </button>
+                        <div class="text-center">
+                            <div id="current-hole-display" class="text-2xl font-bold text-gray-900">Hole 1</div>
+                            <div class="text-sm text-gray-600">of 18</div>
+                        </div>
+                        <button id="next-hole" class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed text-lg font-medium">
+                            Next →
+                        </button>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 5.56%"></div>
+                    </div>
+                </div>
+
+                <!-- Scoring Interface -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 id="hole-title" class="text-xl font-semibold mb-4 text-center">Hole 1 Scoring</h3>
+                    
+                    <!-- Team 1 -->
+                    <div class="mb-6">
+                        <h4 id="team1-name" class="text-lg font-medium text-gray-900 mb-3"></h4>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <input id="team1-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" placeholder="0">
+                            <div class="text-sm text-gray-600">strokes</div>
+                        </div>
+                        <div id="team1-buttons" class="grid grid-cols-6 gap-2">
+                            <button class="btn-quick-score" data-team="1" data-score="3">3</button>
+                            <button class="btn-quick-score" data-team="1" data-score="4">4</button>
+                            <button class="btn-quick-score" data-team="1" data-score="5">5</button>
+                            <button class="btn-quick-score" data-team="1" data-score="6">6</button>
+                            <button class="btn-quick-score" data-team="1" data-score="7">7</button>
+                            <button class="btn-quick-score" data-team="1" data-score="8">8</button>
+                        </div>
+                    </div>
+
+                    <!-- Team 2 -->
+                    <div class="mb-6">
+                        <h4 id="team2-name" class="text-lg font-medium text-gray-900 mb-3"></h4>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <input id="team2-score" type="number" min="1" max="15" class="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" placeholder="0">
+                            <div class="text-sm text-gray-600">strokes</div>
+                        </div>
+                        <div id="team2-buttons" class="grid grid-cols-6 gap-2">
+                            <button class="btn-quick-score" data-team="2" data-score="3">3</button>
+                            <button class="btn-quick-score" data-team="2" data-score="4">4</button>
+                            <button class="btn-quick-score" data-team="2" data-score="5">5</button>
+                            <button class="btn-quick-score" data-team="2" data-score="6">6</button>
+                            <button class="btn-quick-score" data-team="2" data-score="7">7</button>
+                            <button class="btn-quick-score" data-team="2" data-score="8">8</button>
+                        </div>
+                    </div>
+
+                    <!-- Hole Result -->
+                    <div id="hole-result" class="text-center p-4 bg-gray-50 rounded-lg hidden">
+                        <div id="hole-result-text" class="text-lg font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Navigation -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h4 class="text-lg font-medium mb-3">Quick Jump to Hole</h4>
+                    <div id="hole-nav-grid" class="grid grid-cols-6 gap-2">
+                        <!-- Hole buttons will be populated here -->
+                    </div>
+                    <div class="text-xs text-gray-500 mt-2">
+                        <span class="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>
+                        Completed holes
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handicap data
+        const handicapData = [
+            { Name: "Kevin", TEAM: "team1", HANDICAP: 1, "MV SINGLES": 5, "MV DOUBLES LOW": 2, "MV DOUBLES HIGH": 0, "SL SINGLES": 5, "SL DOUBLES LOW": 2, "SL DOUBLES HIGH": 0 },
+            { Name: "Scott", TEAM: "team1", HANDICAP: 2, "MV SINGLES": 19, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 16, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 2 },
+            { Name: "Kranz", TEAM: "team1", HANDICAP: 3, "MV SINGLES": 19, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 16, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 2 },
+            { Name: "Pat", TEAM: "team1", HANDICAP: 4, "MV SINGLES": 31, "MV DOUBLES LOW": 11, "MV DOUBLES HIGH": 5, "SL SINGLES": 26, "SL DOUBLES LOW": 9, "SL DOUBLES HIGH": 4 },
+            { Name: "Jake", TEAM: "team1", HANDICAP: 5, "MV SINGLES": 44, "MV DOUBLES LOW": 0, "MV DOUBLES HIGH": 7, "SL SINGLES": 37, "SL DOUBLES LOW": 0, "SL DOUBLES HIGH": 5 },
+            { Name: "Noah", TEAM: "team2", HANDICAP: 1, "MV SINGLES": 8, "MV DOUBLES LOW": 3, "MV DOUBLES HIGH": 0, "SL SINGLES": 7, "SL DOUBLES LOW": 2, "SL DOUBLES HIGH": 0 },
+            { Name: "Brett", TEAM: "team2", HANDICAP: 2, "MV SINGLES": 16, "MV DOUBLES LOW": 6, "MV DOUBLES HIGH": 2, "SL SINGLES": 14, "SL DOUBLES LOW": 5, "SL DOUBLES HIGH": 2 },
+            { Name: "Brophy", TEAM: "team2", HANDICAP: 3, "MV SINGLES": 16, "MV DOUBLES LOW": 6, "MV DOUBLES HIGH": 2, "SL SINGLES": 14, "SL DOUBLES LOW": 5, "SL DOUBLES HIGH": 2 },
+            { Name: "Rath", TEAM: "team2", HANDICAP: 4, "MV SINGLES": 21, "MV DOUBLES LOW": 7, "MV DOUBLES HIGH": 3, "SL SINGLES": 18, "SL DOUBLES LOW": 6, "SL DOUBLES HIGH": 3 },
+            { Name: "Jeff", TEAM: "team2", HANDICAP: 5, "MV SINGLES": 37, "MV DOUBLES LOW": 0, "MV DOUBLES HIGH": 6, "SL SINGLES": 31, "SL DOUBLES LOW": 0, "SL DOUBLES HIGH": 5 }
+        ];
+
+        // Tournament structure
+        const initialTournament = {
+            day1: {
+                course: 'MV',
+                matches: [
+                    { id: 'day1-singles', type: 'singles', name: 'Day 1 Singles', team1Player: '', team2Player: '' },
+                    { id: 'day1-doubles1', type: 'doubles', name: 'Day 1 Doubles 1', team1Players: ['', ''], team2Players: ['', ''] },
+                    { id: 'day1-doubles2', type: 'doubles', name: 'Day 1 Doubles 2', team1Players: ['', ''], team2Players: ['', ''] }
+                ]
+            },
+            day2: {
+                course: 'SL',
+                matches: [
+                    { id: 'day2-singles', type: 'singles', name: 'Day 2 Singles', team1Player: '', team2Player: '' },
+                    { id: 'day2-doubles1', type: 'doubles', name: 'Day 2 Doubles 1', team1Players: ['', ''], team2Players: ['', ''] },
+                    { id: 'day2-doubles2', type: 'doubles', name: 'Day 2 Doubles 2', team1Players: ['', ''], team2Players: ['', ''] }
+                ]
+            },
+            day3: {
+                course: 'MV',
+                matches: [
+                    { id: 'day3-singles1', type: 'singles', name: 'Day 3 Singles 1', team1Player: '', team2Player: '' },
+                    { id: 'day3-singles2', type: 'singles', name: 'Day 3 Singles 2', team1Player: '', team2Player: '' },
+                    { id: 'day3-singles3', type: 'singles', name: 'Day 3 Singles 3', team1Player: '', team2Player: '' },
+                    { id: 'day3-singles4', type: 'singles', name: 'Day 3 Singles 4', team1Player: '', team2Player: '' },
+                    { id: 'day3-singles5', type: 'singles', name: 'Day 3 Singles 5', team1Player: '', team2Player: '' }
+                ]
+            }
+        };
+
+        // App state
+        let tournament = JSON.parse(JSON.stringify(initialTournament));
+        let matchScores = {};
+        let currentView = 'dashboard';
+        let currentMatch = null;
+        let currentHole = 1;
+
+        // Utility functions
+        function getTeamPlayers(teamName) {
+            return handicapData.filter(player => player.TEAM === teamName);
+        }
+
+        function getPlayerHandicap(playerName, course, matchType) {
+            const player = handicapData.find(p => p.Name === playerName);
+            if (!player) return 0;
+            
+            if (matchType === 'singles') {
+                return player[`${course} SINGLES`];
+            } else {
+                return player[`${course} DOUBLES LOW`];
+            }
+        }
+
+        function getDoublesHandicap(player1, player2, course) {
+            const p1 = handicapData.find(p => p.Name === player1);
+            const p2 = handicapData.find(p => p.Name === player2);
+            if (!p1 || !p2) return 0;
+            
+            const p1Lower = p1.HANDICAP < p2.HANDICAP;
+            const lowHandicap = p1Lower ? p1[`${course} DOUBLES LOW`] : p2[`${course} DOUBLES LOW`];
+            const highHandicap = p1Lower ? p2[`${course} DOUBLES HIGH`] : p1[`${course} DOUBLES HIGH`];
+            
+            return lowHandicap + highHandicap;
+        }
+
+        function calculateHoleResult(team1Score, team2Score, team1Handicap, team2Handicap) {
+            const team1Net = team1Score - team1Handicap;
+            const team2Net = team2Score - team2Handicap;
+            
+            if (team1Net < team2Net) return 'team1';
+            if (team2Net < team1Net) return 'team2';
+            return 'tie';
+        }
+
+        function calculateMatchStatus(scores) {
+            let team1Up = 0;
+            let holesPlayed = 0;
+            
+            for (let hole = 1; hole <= 18; hole++) {
+                if (scores.team1[hole] && scores.team2[hole]) {
+                    const result = calculateHoleResult(
+                        scores.team1[hole], 
+                        scores.team2[hole], 
+                        scores.team1Handicap || 0, 
+                        scores.team2Handicap || 0
+                    );
+                    
+                    if (result === 'team1') team1Up++;
+                    else if (result === 'team2') team1Up--;
+                    
+                    holesPlayed++;
                 }
-            };
-
-            const [currentView, setCurrentView] = useState('dashboard');
-            const [tournament, setTournament] = useState(initialTournament);
-            const [matchScores, setMatchScores] = useState({});
-            const [editingMatch, setEditingMatch] = useState(null);
-
-            // Get players by team
-            const getTeamPlayers = (teamName) => {
-                return handicapData.filter(player => player.TEAM === teamName);
-            };
-
-            // Calculate handicap for a player in a specific match
-            const getPlayerHandicap = (playerName, course, matchType, isLowerHandicap = true) => {
-                const player = handicapData.find(p => p.Name === playerName);
-                if (!player) return 0;
-                
-                if (matchType === 'singles') {
-                    return player[`${course} SINGLES`];
-                } else {
-                    return player[`${course} DOUBLES ${isLowerHandicap ? 'LOW' : 'HIGH'}`];
-                }
-            };
-
-            // Calculate combined handicap for doubles team
-            const getDoublesHandicap = (player1, player2, course) => {
-                const p1 = handicapData.find(p => p.Name === player1);
-                const p2 = handicapData.find(p => p.Name === player2);
-                if (!p1 || !p2) return 0;
-                
-                // Determine who has lower handicap
-                const p1Lower = p1.HANDICAP < p2.HANDICAP;
-                const lowHandicap = p1Lower ? p1[`${course} DOUBLES LOW`] : p2[`${course} DOUBLES LOW`];
-                const highHandicap = p1Lower ? p2[`${course} DOUBLES HIGH`] : p1[`${course} DOUBLES HIGH`];
-                
-                return lowHandicap + highHandicap;
-            };
-
-            // Calculate match play result for a hole
-            const calculateHoleResult = (team1Score, team2Score, team1Handicap, team2Handicap) => {
-                const team1Net = team1Score - team1Handicap;
-                const team2Net = team2Score - team2Handicap;
-                
-                if (team1Net < team2Net) return 'team1';
-                if (team2Net < team1Net) return 'team2';
-                return 'tie';
-            };
-
-            // Calculate overall match status
-            const calculateMatchStatus = (scores) => {
-                let team1Up = 0;
-                let holesPlayed = 0;
-                
-                for (let hole = 1; hole <= 18; hole++) {
-                    if (scores.team1[hole] && scores.team2[hole]) {
-                        const result = calculateHoleResult(
-                            scores.team1[hole], 
-                            scores.team2[hole], 
-                            scores.team1Handicap || 0, 
-                            scores.team2Handicap || 0
-                        );
-                        
-                        if (result === 'team1') team1Up++;
-                        else if (result === 'team2') team1Up--;
-                        
-                        holesPlayed++;
-                    }
-                }
-                
-                const holesRemaining = 18 - holesPlayed;
-                
-                if (Math.abs(team1Up) > holesRemaining) {
-                    return {
-                        status: 'completed',
-                        winner: team1Up > 0 ? 'team1' : 'team2',
-                        margin: Math.abs(team1Up),
-                        description: `${Math.abs(team1Up)} & ${holesRemaining}`
-                    };
-                }
-                
-                if (holesPlayed === 18) {
-                    if (team1Up === 0) {
-                        return { status: 'tied', description: 'All Square' };
-                    }
-                    return {
-                        status: 'completed',
-                        winner: team1Up > 0 ? 'team1' : 'team2',
-                        margin: Math.abs(team1Up),
-                        description: `${Math.abs(team1Up)} up`
-                    };
-                }
-                
-                if (team1Up === 0) {
-                    return { status: 'playing', description: 'All Square' };
-                }
-                
+            }
+            
+            const holesRemaining = 18 - holesPlayed;
+            
+            if (Math.abs(team1Up) > holesRemaining) {
                 return {
-                    status: 'playing',
-                    leader: team1Up > 0 ? 'team1' : 'team2',
+                    status: 'completed',
+                    winner: team1Up > 0 ? 'team1' : 'team2',
+                    margin: Math.abs(team1Up),
+                    description: `${Math.abs(team1Up)} & ${holesRemaining}`
+                };
+            }
+            
+            if (holesPlayed === 18) {
+                if (team1Up === 0) {
+                    return { status: 'tied', description: 'All Square' };
+                }
+                return {
+                    status: 'completed',
+                    winner: team1Up > 0 ? 'team1' : 'team2',
                     margin: Math.abs(team1Up),
                     description: `${Math.abs(team1Up)} up`
                 };
+            }
+            
+            if (team1Up === 0) {
+                return { status: 'playing', description: 'All Square' };
+            }
+            
+            return {
+                status: 'playing',
+                leader: team1Up > 0 ? 'team1' : 'team2',
+                margin: Math.abs(team1Up),
+                description: `${Math.abs(team1Up)} up`
             };
+        }
 
-            // Initialize match scores when tournament changes
-            useEffect(() => {
-                const newMatchScores = {};
-                Object.values(tournament).forEach(day => {
-                    day.matches.forEach(match => {
-                        if (!matchScores[match.id]) {
-                            const team1Handicap = match.type === 'singles' 
-                                ? getPlayerHandicap(match.team1Player, day.course, 'singles')
-                                : getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course);
-                            
-                            const team2Handicap = match.type === 'singles'
-                                ? getPlayerHandicap(match.team2Player, day.course, 'singles')
-                                : getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course);
-                            
-                            newMatchScores[match.id] = {
-                                team1: {},
-                                team2: {},
-                                team1Handicap,
-                                team2Handicap
-                            };
-                        }
-                    });
-                });
-                setMatchScores(prev => ({ ...prev, ...newMatchScores }));
-            }, [tournament]);
-
-            // Tournament Setup Component
-            const TournamentSetup = () => {
-                const updateMatch = (day, matchIndex, updates) => {
-                    const newTournament = { ...tournament };
-                    newTournament[day].matches[matchIndex] = { 
-                        ...newTournament[day].matches[matchIndex], 
-                        ...updates 
+        // Initialize match scores
+        function initializeMatchScores() {
+            matchScores = {};
+            Object.values(tournament).forEach(day => {
+                day.matches.forEach(match => {
+                    matchScores[match.id] = {
+                        team1: {},
+                        team2: {},
+                        team1Handicap: 0,
+                        team2Handicap: 0
                     };
-                    setTournament(newTournament);
-                };
+                });
+            });
+        }
 
-                return (
-                    <div className="space-y-6">
-                        <div className="flex items-center space-x-3 mb-6">
-                            <Users className="h-8 w-8 text-blue-600" />
-                            <h1 className="text-3xl font-bold text-gray-900">Tournament Setup</h1>
-                        </div>
-                        
-                        {Object.entries(tournament).map(([dayKey, day]) => (
-                            <div key={dayKey} className="bg-white rounded-lg shadow-lg p-6">
-                                <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                                    {dayKey.charAt(0).toUpperCase() + dayKey.slice(1)} - Course {day.course}
-                                </h2>
-                                
-                                <div className="space-y-4">
-                                    {day.matches.map((match, matchIndex) => (
-                                        <div key={match.id} className="border rounded-lg p-4 bg-gray-50">
-                                            <h3 className="font-medium text-gray-700 mb-3">{match.name}</h3>
-                                            
-                                            {match.type === 'singles' ? (
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-600 mb-1">Team 1 Player</label>
-                                                        <select 
-                                                            className="w-full p-2 border border-gray-300 rounded-md"
-                                                            value={match.team1Player}
-                                                            onChange={(e) => updateMatch(dayKey, matchIndex, { team1Player: e.target.value })}
-                                                        >
-                                                            <option value="">Select Player</option>
-                                                            {getTeamPlayers('team1').map(player => (
-                                                                <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-600 mb-1">Team 2 Player</label>
-                                                        <select 
-                                                            className="w-full p-2 border border-gray-300 rounded-md"
-                                                            value={match.team2Player}
-                                                            onChange={(e) => updateMatch(dayKey, matchIndex, { team2Player: e.target.value })}
-                                                        >
-                                                            <option value="">Select Player</option>
-                                                            {getTeamPlayers('team2').map(player => (
-                                                                <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-600 mb-1">Team 1 Players</label>
-                                                        <div className="space-y-2">
-                                                            <select 
-                                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                                                value={match.team1Players[0]}
-                                                                onChange={(e) => updateMatch(dayKey, matchIndex, { 
-                                                                    team1Players: [e.target.value, match.team1Players[1]] 
-                                                                })}
-                                                            >
-                                                                <option value="">Select Player 1</option>
-                                                                {getTeamPlayers('team1').map(player => (
-                                                                    <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                                ))}
-                                                            </select>
-                                                            <select 
-                                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                                                value={match.team1Players[1]}
-                                                                onChange={(e) => updateMatch(dayKey, matchIndex, { 
-                                                                    team1Players: [match.team1Players[0], e.target.value] 
-                                                                })}
-                                                            >
-                                                                <option value="">Select Player 2</option>
-                                                                {getTeamPlayers('team1').map(player => (
-                                                                    <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-600 mb-1">Team 2 Players</label>
-                                                        <div className="space-y-2">
-                                                            <select 
-                                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                                                value={match.team2Players[0]}
-                                                                onChange={(e) => updateMatch(dayKey, matchIndex, { 
-                                                                    team2Players: [e.target.value, match.team2Players[1]] 
-                                                                })}
-                                                            >
-                                                                <option value="">Select Player 1</option>
-                                                                {getTeamPlayers('team2').map(player => (
-                                                                    <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                                ))}
-                                                            </select>
-                                                            <select 
-                                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                                                value={match.team2Players[1]}
-                                                                onChange={(e) => updateMatch(dayKey, matchIndex, { 
-                                                                    team2Players: [match.team2Players[0], e.target.value] 
-                                                                })}
-                                                            >
-                                                                <option value="">Select Player 2</option>
-                                                                {getTeamPlayers('team2').map(player => (
-                                                                    <option key={player.Name} value={player.Name}>{player.Name}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            
-                                            {/* Show calculated handicaps */}
-                                            <div className="mt-3 p-3 bg-blue-50 rounded-md">
-                                                <div className="text-sm text-blue-800">
-                                                    <strong>Handicaps:</strong> Team 1: {
-                                                        match.type === 'singles' 
-                                                            ? getPlayerHandicap(match.team1Player, day.course, 'singles')
-                                                            : getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course)
-                                                    } | Team 2: {
-                                                        match.type === 'singles'
-                                                            ? getPlayerHandicap(match.team2Player, day.course, 'singles')
-                                                            : getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course)
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                );
-            };
-
-            // Match Scoring Component
-            const MatchScoring = ({ matchId }) => {
-                const match = Object.values(tournament).flatMap(day => day.matches).find(m => m.id === matchId);
-                const scores = matchScores[matchId] || { team1: {}, team2: {}, team1Handicap: 0, team2Handicap: 0 };
-                const [currentHole, setCurrentHole] = useState(1);
-                const [viewMode, setViewMode] = useState('mobile');
-                
-                const updateScore = (team, hole, score) => {
-                    const newScores = { ...matchScores };
-                    newScores[matchId] = { ...newScores[matchId] };
-                    newScores[matchId][team] = { ...newScores[matchId][team], [hole]: parseInt(score) || 0 };
-                    setMatchScores(newScores);
-                };
-
-                const quickScore = (team, hole, score) => {
-                    updateScore(team, hole, score);
-                };
-
-                const matchStatus = calculateMatchStatus(scores);
-
-                const nextHole = () => {
-                    if (currentHole < 18) setCurrentHole(currentHole + 1);
-                };
-
-                const prevHole = () => {
-                    if (currentHole > 1) setCurrentHole(currentHole - 1);
-                };
-
-                const getHoleResult = (hole) => {
-                    if (scores.team1[hole] && scores.team2[hole]) {
-                        return calculateHoleResult(scores.team1[hole], scores.team2[hole], scores.team1Handicap, scores.team2Handicap);
-                    }
-                    return null;
-                };
-
-                // Mobile-first scoring interface
-                const MobileScoring = () => (
-                    <div className="space-y-4">
-                        {/* Hole Navigation */}
-                        <div className="bg-white rounded-lg shadow-lg p-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    onClick={prevHole}
-                                    disabled={currentHole === 1}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed text-lg font-medium"
-                                >
-                                    ← Prev
-                                </button>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900">Hole {currentHole}</div>
-                                    <div className="text-sm text-gray-600">of 18</div>
-                                </div>
-                                <button
-                                    onClick={nextHole}
-                                    disabled={currentHole === 18}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed text-lg font-medium"
-                                >
-                                    Next →
-                                </button>
-                            </div>
-                            
-                            {/* Hole Progress Bar */}
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div 
-                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${(currentHole / 18) * 100}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
-                        {/* Current Hole Scoring */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-xl font-semibold mb-4 text-center">Hole {currentHole} Scoring</h3>
-                            
-                            {/* Team 1 */}
-                            <div className="mb-6">
-                                <h4 className="text-lg font-medium text-gray-900 mb-3">
-                                    {match?.type === 'singles' ? match.team1Player : match.team1Players.join(' & ')}
-                                </h4>
-                                <div className="flex items-center space-x-3 mb-3">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="15"
-                                        className="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                        value={scores.team1[currentHole] || ''}
-                                        onChange={(e) => updateScore('team1', currentHole, e.target.value)}
-                                        placeholder="0"
-                                    />
-                                    <div className="text-sm text-gray-600">strokes</div>
-                                </div>
-                                {/* Quick Score Buttons */}
-                                <div className="grid grid-cols-6 gap-2">
-                                    {[3, 4, 5, 6, 7, 8].map(score => (
-                                        <button
-                                            key={score}
-                                            onClick={() => quickScore('team1', currentHole, score)}
-                                            className={`h-12 rounded-lg font-medium ${
-                                                scores.team1[currentHole] === score 
-                                                    ? 'bg-blue-600 text-white' 
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            {score}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Team 2 */}
-                            <div className="mb-6">
-                                <h4 className="text-lg font-medium text-gray-900 mb-3">
-                                    {match?.type === 'singles' ? match.team2Player : match.team2Players.join(' & ')}
-                                </h4>
-                                <div className="flex items-center space-x-3 mb-3">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="15"
-                                        className="w-20 h-16 text-3xl font-bold text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                                        value={scores.team2[currentHole] || ''}
-                                        onChange={(e) => updateScore('team2', currentHole, e.target.value)}
-                                        placeholder="0"
-                                    />
-                                    <div className="text-sm text-gray-600">strokes</div>
-                                </div>
-                                {/* Quick Score Buttons */}
-                                <div className="grid grid-cols-6 gap-2">
-                                    {[3, 4, 5, 6, 7, 8].map(score => (
-                                        <button
-                                            key={score}
-                                            onClick={() => quickScore('team2', currentHole, score)}
-                                            className={`h-12 rounded-lg font-medium ${
-                                                scores.team2[currentHole] === score 
-                                                    ? 'bg-blue-600 text-white' 
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            {score}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Hole Result */}
-                            {scores.team1[currentHole] && scores.team2[currentHole] && (
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <div className="text-lg font-semibold">
-                                        {getHoleResult(currentHole) === 'team1' && (
-                                            <span className="text-green-600">Team 1 Wins Hole</span>
-                                        )}
-                                        {getHoleResult(currentHole) === 'team2' && (
-                                            <span className="text-blue-600">Team 2 Wins Hole</span>
-                                        )}
-                                        {getHoleResult(currentHole) === 'tie' && (
-                                            <span className="text-yellow-600">Hole Tied</span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Quick Navigation Grid */}
-                        <div className="bg-white rounded-lg shadow-lg p-4">
-                            <h4 className="text-lg font-medium mb-3">Quick Jump to Hole</h4>
-                            <div className="grid grid-cols-6 gap-2">
-                                {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].map(hole => (
-                                    <button
-                                        key={hole}
-                                        onClick={() => setCurrentHole(hole)}
-                                        className={`h-12 rounded-lg font-medium ${
-                                            currentHole === hole 
-                                                ? 'bg-blue-600 text-white' 
-                                                : scores.team1[hole] && scores.team2[hole]
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        {hole}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-2">
-                                <span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>
-                                Completed holes
-                            </div>
-                        </div>
-                    </div>
-                );
-
-                // Desktop view (original table)
-                const DesktopScoring = () => (
-                    <div className="bg-white rounded-lg shadow-lg p-6">
-                        <h2 className="text-xl font-semibold mb-4">Hole-by-Hole Scoring</h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left p-2">Hole</th>
-                                        {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].map(hole => (
-                                            <th key={hole} className="text-center p-2 min-w-[50px]">{hole}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr className="border-b">
-                                        <td className="p-2 font-medium">Team 1</td>
-                                        {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].map(hole => (
-                                            <td key={hole} className="p-2">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="15"
-                                                    className="w-full p-1 border border-gray-300 rounded text-center"
-                                                    value={scores.team1[hole] || ''}
-                                                    onChange={(e) => updateScore('team1', hole, e.target.value)}
-                                                />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                    <tr className="border-b">
-                                        <td className="p-2 font-medium">Team 2</td>
-                                        {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].map(hole => (
-                                            <td key={hole} className="p-2">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="15"
-                                                    className="w-full p-1 border border-gray-300 rounded text-center"
-                                                    value={scores.team2[hole] || ''}
-                                                    onChange={(e) => updateScore('team2', hole, e.target.value)}
-                                                />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                    <tr>
-                                        <td className="p-2 font-medium">Result</td>
-                                        {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].map(hole => {
-                                            const result = getHoleResult(hole);
-                                            return (
-                                                <td key={hole} className="p-2 text-center">
-                                                    {result === 'team1' && <span className="text-green-600 font-bold">T1</span>}
-                                                    {result === 'team2' && <span className="text-blue-600 font-bold">T2</span>}
-                                                    {result === 'tie' && <span className="text-yellow-600 font-bold">T</span>}
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-
-                return (
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{match?.name}</h1>
-                                <p className="text-gray-600 text-sm md:text-base">
-                                    {match?.type === 'singles' 
-                                        ? `${match.team1Player} vs ${match.team2Player}`
-                                        : `${match.team1Players.join(' & ')} vs ${match.team2Players.join(' & ')}`
-                                    }
-                                </p>
-                            </div>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => setViewMode(viewMode === 'mobile' ? 'desktop' : 'mobile')}
-                                    className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
-                                >
-                                    {viewMode === 'mobile' ? 'Table' : 'Mobile'}
-                                </button>
-                                <button
-                                    onClick={() => setEditingMatch(null)}
-                                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
-                                >
-                                    Back
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Match Status */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-lg md:text-xl font-semibold mb-4">Match Status</h2>
-                            <div className="text-lg md:text-xl font-medium">
-                                {matchStatus.status === 'completed' && (
-                                    <span className="text-green-600">
-                                        {matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins {matchStatus.description}
-                                    </span>
-                                )}
-                                {matchStatus.status === 'tied' && (
-                                    <span className="text-yellow-600">{matchStatus.description}</span>
-                                )}
-                                {matchStatus.status === 'playing' && (
-                                    <span className="text-blue-600">
-                                        {matchStatus.leader ? 
-                                            `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}` :
-                                            matchStatus.description
-                                        }
-                                    </span>
-                                )}
-                            </div>
-                            <div className="mt-2 text-sm text-gray-600">
-                                Team 1 Handicap: {scores.team1Handicap} | Team 2 Handicap: {scores.team2Handicap}
-                            </div>
-                        </div>
-
-                        {/* Scoring Interface */}
-                        {viewMode === 'mobile' ? <MobileScoring /> : <DesktopScoring />}
-                    </div>
-                );
-            };
-
-            // Tournament Dashboard Component
-            const TournamentDashboard = () => {
-                const allMatches = Object.values(tournament).flatMap(day => 
-                    day.matches.map(match => ({ ...match, course: day.course }))
-                );
-
-                return (
-                    <div className="space-y-6">
-                        <div className="flex items-center space-x-3 mb-6">
-                            <Trophy className="h-8 w-8 text-yellow-600" />
-                            <h1 className="text-3xl font-bold text-gray-900">Tournament Dashboard</h1>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {allMatches.map(match => {
-                                const scores = matchScores[match.id];
-                                const matchStatus = scores ? calculateMatchStatus(scores) : null;
-                                
-                                return (
-                                    <div key={match.id} className="bg-white rounded-lg shadow-lg p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900">{match.name}</h3>
-                                            <span className="text-sm text-gray-500">Course {match.course}</span>
-                                        </div>
-                                        
-                                        <div className="space-y-2 mb-4">
-                                            {match.type === 'singles' ? (
-                                                <div className="text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span>{match.team1Player || 'TBD'}</span>
-                                                        <span className="text-gray-400">vs</span>
-                                                        <span>{match.team2Player || 'TBD'}</span>
-                                                    </div>
-                                                    {match.team1Player && match.team2Player && (
-                                                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                                            <span>HCP: {getPlayerHandicap(match.team1Player, match.course, 'singles')}</span>
-                                                            <span>HCP: {getPlayerHandicap(match.team2Player, match.course, 'singles')}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span>{match.team1Players.join(' & ') || 'TBD'}</span>
-                                                        <span className="text-gray-400">vs</span>
-                                                        <span>{match.team2Players.join(' & ') || 'TBD'}</span>
-                                                    </div>
-                                                    {match.team1Players[0] && match.team1Players[1] && match.team2Players[0] && match.team2Players[1] && (
-                                                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                                            <span>HCP: {getDoublesHandicap(match.team1Players[0], match.team1Players[1], match.course)}</span>
-                                                            <span>HCP: {getDoublesHandicap(match.team2Players[0], match.team2Players[1], match.course)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {matchStatus && (
-                                            <div className="mb-4 p-3 bg-gray-50 rounded-md">
-                                                <div className="text-sm font-medium">
-                                                    {matchStatus.status === 'completed' && (
-                                                        <span className="text-green-600">
-                                                            {matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins {matchStatus.description}
-                                                        </span>
-                                                    )}
-                                                    {matchStatus.status === 'tied' && (
-                                                        <span className="text-yellow-600">{matchStatus.description}</span>
-                                                    )}
-                                                    {matchStatus.status === 'playing' && (
-                                                        <span className="text-blue-600">
-                                                            {matchStatus.leader ? 
-                                                                `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}` :
-                                                                matchStatus.description
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <button
-                                            onClick={() => setEditingMatch(match.id)}
-                                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2"
-                                        >
-                                            <Edit3 className="h-4 w-4" />
-                                            <span>Score Match</span>
-                                        </button>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            };
-
-            // Navigation
-            const Navigation = () => (
-                <nav className="bg-white shadow-sm border-b mb-6">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between h-16">
-                            <div className="flex space-x-8">
-                                <button
-                                    onClick={() => setCurrentView('dashboard')}
-                                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                                        currentView === 'dashboard' 
-                                            ? 'border-blue-500 text-blue-600' 
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    <Trophy className="h-5 w-5 mr-2" />
-                                    Dashboard
-                                </button>
-                                <button
-                                    onClick={() => setCurrentView('setup')}
-                                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
-                                        currentView === 'setup' 
-                                            ? 'border-blue-500 text-blue-600' 
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    <Users className="h-5 w-5 mr-2" />
-                                    Setup
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-            );
-
-            return (
-                <div className="min-h-screen bg-gray-50">
-                    <Navigation />
+        // Render functions
+        function renderDashboard() {
+            const grid = document.getElementById('matches-grid');
+            grid.innerHTML = '';
+            
+            Object.values(tournament).forEach(day => {
+                day.matches.forEach(match => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.className = 'bg-white rounded-lg shadow-lg p-6';
                     
-                    <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                        {editingMatch ? (
-                            <MatchScoring matchId={editingMatch} />
-                        ) : currentView === 'dashboard' ? (
-                            <TournamentDashboard />
-                        ) : (
-                            <TournamentSetup />
-                        )}
-                    </div>
-                </div>
-            );
-        };
+                    const team1Display = match.type === 'singles' ? 
+                        (match.team1Player || 'TBD') : 
+                        (match.team1Players.join(' & ') || 'TBD');
+                    const team2Display = match.type === 'singles' ? 
+                        (match.team2Player || 'TBD') : 
+                        (match.team2Players.join(' & ') || 'TBD');
+                    
+                    let handicapDisplay = '';
+                    if (match.type === 'singles' && match.team1Player && match.team2Player) {
+                        const team1Hcp = getPlayerHandicap(match.team1Player, day.course, 'singles');
+                        const team2Hcp = getPlayerHandicap(match.team2Player, day.course, 'singles');
+                        handicapDisplay = `<div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>HCP: ${team1Hcp}</span>
+                            <span>HCP: ${team2Hcp}</span>
+                        </div>`;
+                    } else if (match.type === 'doubles' && match.team1Players[0] && match.team1Players[1] && match.team2Players[0] && match.team2Players[1]) {
+                        const team1Hcp = getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course);
+                        const team2Hcp = getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course);
+                        handicapDisplay = `<div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>HCP: ${team1Hcp}</span>
+                            <span>HCP: ${team2Hcp}</span>
+                        </div>`;
+                    }
+                    
+                    const scores = matchScores[match.id];
+                    const matchStatus = scores ? calculateMatchStatus(scores) : null;
+                    
+                    let statusDisplay = '';
+                    if (matchStatus) {
+                        let statusClass = 'text-blue-600';
+                        let statusText = matchStatus.description;
+                        
+                        if (matchStatus.status === 'completed') {
+                            statusClass = 'text-green-600';
+                            statusText = `${matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins ${matchStatus.description}`;
+                        } else if (matchStatus.status === 'tied') {
+                            statusClass = 'text-yellow-600';
+                        } else if (matchStatus.leader) {
+                            statusText = `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}`;
+                        }
+                        
+                        statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md">
+                            <div class="text-sm font-medium ${statusClass}">${statusText}</div>
+                        </div>`;
+                    }
+                    
+                    matchDiv.innerHTML = `
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${match.name}</h3>
+                            <span class="text-sm text-gray-500">Course ${day.course}</span>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <div class="text-sm">
+                                <div class="flex justify-between">
+                                    <span>${team1Display}</span>
+                                    <span class="text-gray-400">vs</span>
+                                    <span>${team2Display}</span>
+                                </div>
+                                ${handicapDisplay}
+                            </div>
+                        </div>
+                        ${statusDisplay}
+                        <button class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium" onclick="openMatch('${match.id}')">
+                            ⚡ Score Match
+                        </button>
+                    `;
+                    
+                    grid.appendChild(matchDiv);
+                });
+            });
+        }
 
-        // Render the app
-        ReactDOM.render(<GolfTournamentApp />, document.getElementById('root'));
+        function renderSetup() {
+            const setupContent = document.getElementById('setup-content');
+            setupContent.innerHTML = '';
+            
+            Object.entries(tournament).forEach(([dayKey, day]) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'bg-white rounded-lg shadow-lg p-6';
+                
+                let matchesHtml = '';
+                day.matches.forEach((match, matchIndex) => {
+                    let playerSelectionHtml = '';
+                    
+                    if (match.type === 'singles') {
+                        const team1Options = getTeamPlayers('team1').map(p => 
+                            `<option value="${p.Name}" ${match.team1Player === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                        ).join('');
+                        const team2Options = getTeamPlayers('team2').map(p => 
+                            `<option value="${p.Name}" ${match.team2Player === p.Name ? 'selected' : ''}>${p.Name}</option>`
+                        ).join('');
+                        
+                        playerSelectionHtml = `
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Team 1 Player</label>
+                                    <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateMatch('${dayKey}', ${matchIndex}, 'team1Player', this.value)">
+                                        <option value="">Select Player</option>
+                                        ${team1Options}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Team 2 Player</label>
+                                    <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateMatch('${dayKey}', ${matchIndex}, 'team2Player', this.value)">
+                                        <option value="">Select Player</option>
+                                        ${team2Options}
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const team1Options = getTeamPlayers('team1').map(p => 
+                            `<option value="${p.Name}">${p.Name}</option>`
+                        ).join('');
+                        const team2Options = getTeamPlayers('team2').map(p => 
+                            `<option value="${p.Name}">${p.Name}</option>`
+                        ).join('');
+                        
+                        playerSelectionHtml = `
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Team 1 Players</label>
+                                    <div class="space-y-2">
+                                        <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team1', 0, this.value)">
+                                            <option value="">Select Player 1</option>
+                                            ${team1Options}
+                                        </select>
+                                        <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team1', 1, this.value)">
+                                            <option value="">Select Player 2</option>
+                                            ${team1Options}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Team 2 Players</label>
+                                    <div class="space-y-2">
+                                        <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team2', 0, this.value)">
+                                            <option value="">Select Player 1</option>
+                                            ${team2Options}
+                                        </select>
+                                        <select class="w-full p-2 border border-gray-300 rounded-md" onchange="updateDoubles('${dayKey}', ${matchIndex}, 'team2', 1, this.value)">
+                                            <option value="">Select Player 2</option>
+                                            ${team2Options}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    const team1Handicap = match.type === 'singles' ? 
+                        getPlayerHandicap(match.team1Player, day.course, 'singles') :
+                        getDoublesHandicap(match.team1Players[0], match.team1Players[1], day.course);
+                    const team2Handicap = match.type === 'singles' ? 
+                        getPlayerHandicap(match.team2Player, day.course, 'singles') :
+                        getDoublesHandicap(match.team2Players[0], match.team2Players[1], day.course);
+                    
+                    matchesHtml += `
+                        <div class="border rounded-lg p-4 bg-gray-50">
+                            <h3 class="font-medium text-gray-700 mb-3">${match.name}</h3>
+                            ${playerSelectionHtml}
+                            <div class="mt-3 p-3 bg-blue-50 rounded-md">
+                                <div class="text-sm text-blue-800">
+                                    <strong>Handicaps:</strong> Team 1: ${team1Handicap} | Team 2: ${team2Handicap}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                dayDiv.innerHTML = `
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                        ${dayKey.charAt(0).toUpperCase() + dayKey.slice(1)} - Course ${day.course}
+                    </h2>
+                    <div class="space-y-4">
+                        ${matchesHtml}
+                    </div>
+                `;
+                
+                setupContent.appendChild(dayDiv);
+            });
+        }
+
+        function renderHoleNavigation() {
+            const grid = document.getElementById('hole-nav-grid');
+            grid.innerHTML = '';
+            
+            for (let hole = 1; hole <= 18; hole++) {
+                const button = document.createElement('button');
+                button.className = 'btn-hole-nav';
+                button.textContent = hole;
+                button.onclick = () => goToHole(hole);
+                
+                if (hole === currentHole) {
+                    button.classList.add('active');
+                }
+                
+                const scores = matchScores[currentMatch];
+                if (scores && scores.team1[hole] && scores.team2[hole]) {
+                    button.classList.add('completed');
+                }
+                
+                grid.appendChild(button);
+            }
+        }
+
+        function updateScoringInterface() {
+            const match = findMatch(currentMatch);
+            const scores = matchScores[currentMatch];
+            
+            if (!match || !scores) return;
+            
+            // Update hole display
+            document.getElementById('current-hole-display').textContent = `Hole ${currentHole}`;
+            document.getElementById('hole-title').textContent = `Hole ${currentHole} Scoring`;
+            
+            // Update progress bar
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${(currentHole / 18) * 100}%`;
+            
+            // Update team names
+            const team1Name = match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ');
+            const team2Name = match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ');
+            document.getElementById('team1-name').textContent = team1Name;
+            document.getElementById('team2-name').textContent = team2Name;
+            
+            // Update score inputs
+            document.getElementById('team1-score').value = scores.team1[currentHole] || '';
+            document.getElementById('team2-score').value = scores.team2[currentHole] || '';
+            
+            // Update quick score buttons
+            updateQuickScoreButtons(1, scores.team1[currentHole]);
+            updateQuickScoreButtons(2, scores.team2[currentHole]);
+            
+            // Update hole result
+            updateHoleResult();
+            
+            // Update match status
+            updateMatchStatus();
+            
+            // Update navigation buttons
+            document.getElementById('prev-hole').disabled = currentHole === 1;
+            document.getElementById('next-hole').disabled = currentHole === 18;
+            
+            // Update hole navigation grid
+            renderHoleNavigation();
+        }
+
+        function updateQuickScoreButtons(team, currentScore) {
+            const buttons = document.querySelectorAll(`[data-team="${team}"]`);
+            buttons.forEach(button => {
+                button.classList.remove('active');
+                if (parseInt(button.dataset.score) === currentScore) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+        function updateHoleResult() {
+            const scores = matchScores[currentMatch];
+            const team1Score = scores.team1[currentHole];
+            const team2Score = scores.team2[currentHole];
+            
+            const resultDiv = document.getElementById('hole-result');
+            const resultText = document.getElementById('hole-result-text');
+            
+            if (team1Score && team2Score) {
+                const result = calculateHoleResult(team1Score, team2Score, scores.team1Handicap, scores.team2Handicap);
+                resultDiv.classList.remove('hidden');
+                
+                if (result === 'team1') {
+                    resultText.textContent = 'Team 1 Wins Hole';
+                    resultText.className = 'text-lg font-semibold text-green-600';
+                } else if (result === 'team2') {
+                    resultText.textContent = 'Team 2 Wins Hole';
+                    resultText.className = 'text-lg font-semibold text-blue-600';
+                } else {
+                    resultText.textContent = 'Hole Tied';
+                    resultText.className = 'text-lg font-semibold text-yellow-600';
+                }
+            } else {
+                resultDiv.classList.add('hidden');
+            }
+        }
+
+        function updateMatchStatus() {
+            const scores = matchScores[currentMatch];
+            const matchStatus = calculateMatchStatus(scores);
+            
+            const statusDiv = document.getElementById('match-status');
+            const handicapsDiv = document.getElementById('match-handicaps');
+            
+            let statusClass = 'text-blue-600';
+            let statusText = matchStatus.description;
+            
+            if (matchStatus.status === 'completed') {
+                statusClass = 'text-green-600';
+                statusText = `${matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins ${matchStatus.description}`;
+            } else if (matchStatus.status === 'tied') {
+                statusClass = 'text-yellow-600';
+            } else if (matchStatus.leader) {
+                statusText = `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}`;
+            }
+            
+            statusDiv.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+            handicapsDiv.textContent = `Team 1 Handicap: ${scores.team1Handicap} | Team 2 Handicap: ${scores.team2Handicap}`;
+        }
+
+        // Event handlers
+        function switchView(view) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('setup-view').classList.add('hidden');
+            document.getElementById('scoring-view').classList.add('hidden');
+            
+            document.getElementById('nav-dashboard').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            document.getElementById('nav-setup').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+            
+            if (view === 'dashboard') {
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                document.getElementById('nav-dashboard').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600';
+                renderDashboard();
+            } else if (view === 'setup') {
+                document.getElementById('setup-view').classList.remove('hidden');
+                document.getElementById('nav-setup').className = 'inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600';
+                renderSetup();
+            } else if (view === 'scoring') {
+                document.getElementById('scoring-view').classList.remove('hidden');
+                updateScoringInterface();
+            }
+            
+            currentView = view;
+        }
+
+        function updateMatch(day, matchIndex, field, value) {
+            tournament[day].matches[matchIndex][field] = value;
+            updateMatchHandicaps(tournament[day].matches[matchIndex], tournament[day].course);
+            renderSetup();
+        }
+
+        function updateDoubles(day, matchIndex, team, playerIndex, value) {
+            tournament[day].matches[matchIndex][`${team}Players`][playerIndex] = value;
+            updateMatchHandicaps(tournament[day].matches[matchIndex], tournament[day].course);
+            renderSetup();
+        }
+
+        function updateMatchHandicaps(match, course) {
+            const scores = matchScores[match.id];
+            if (!scores) return;
+            
+            if (match.type === 'singles') {
+                scores.team1Handicap = getPlayerHandicap(match.team1Player, course, 'singles');
+                scores.team2Handicap = getPlayerHandicap(match.team2Player, course, 'singles');
+            } else {
+                scores.team1Handicap = getDoublesHandicap(match.team1Players[0], match.team1Players[1], course);
+                scores.team2Handicap = getDoublesHandicap(match.team2Players[0], match.team2Players[1], course);
+            }
+        }
+
+        function findMatch(matchId) {
+            for (const day of Object.values(tournament)) {
+                for (const match of day.matches) {
+                    if (match.id === matchId) {
+                        return match;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function openMatch(matchId) {
+            currentMatch = matchId;
+            currentHole = 1;
+            
+            const match = findMatch(matchId);
+            if (!match) return;
+            
+            // Update match display
+            document.getElementById('match-title').textContent = match.name;
+            
+            const playersText = match.type === 'singles' ? 
+                `${match.team1Player} vs ${match.team2Player}` :
+                `${match.team1Players.join(' & ')} vs ${match.team2Players.join(' & ')}`;
+            document.getElementById('match-players').textContent = playersText;
+            
+            switchView('scoring');
+        }
+
+        function goToHole(hole) {
+            currentHole = hole;
+            updateScoringInterface();
+        }
+
+        function updateScore(team, hole, score) {
+            const scores = matchScores[currentMatch];
+            scores[`team${team}`][hole] = parseInt(score) || 0;
+            updateScoringInterface();
+        }
+
+        function quickScore(team, score) {
+            updateScore(team, currentHole, score);
+        }
+
+        // Initialize app
+        function init() {
+            initializeMatchScores();
+            
+            // Set up event listeners
+            document.getElementById('nav-dashboard').onclick = () => switchView('dashboard');
+            document.getElementById('nav-setup').onclick = () => switchView('setup');
+            document.getElementById('back-to-dashboard').onclick = () => switchView('dashboard');
+            
+            document.getElementById('prev-hole').onclick = () => {
+                if (currentHole > 1) {
+                    currentHole--;
+                    updateScoringInterface();
+                }
+            };
+            
+            document.getElementById('next-hole').onclick = () => {
+                if (currentHole < 18) {
+                    currentHole++;
+                    updateScoringInterface();
+                }
+            };
+            
+            // Score input listeners
+            document.getElementById('team1-score').oninput = (e) => {
+                updateScore(1, currentHole, e.target.value);
+            };
+            
+            document.getElementById('team2-score').oninput = (e) => {
+                updateScore(2, currentHole, e.target.value);
+            };
+            
+            // Quick score button listeners
+            document.querySelectorAll('.btn-quick-score').forEach(button => {
+                button.onclick = () => {
+                    const team = button.dataset.team;
+                    const score = button.dataset.score;
+                    quickScore(team, score);
+                };
+            });
+            
+            // Initial render
+            switchView('dashboard');
+        }
+
+        // Start the app
+        init();
     </script>
 </body>
 </html>
