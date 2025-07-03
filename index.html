@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golf Tournament Scoring System</title>
+    <title>Founders Cup Scoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -69,10 +69,10 @@
             <div class="flex justify-between h-16">
                 <div class="flex space-x-8">
                     <button id="nav-dashboard" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
-                        🏆 Dashboard
+                        🏆 Match Dashboard
                     </button>
                     <button id="nav-setup" class="inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                        👥 Setup
+                        👥 Match Setup
                     </button>
                 </div>
             </div>
@@ -81,7 +81,7 @@
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         
-        <!-- Tournament Dashboard -->
+        <!-- Match Dashboard -->
         <div id="dashboard-view" class="space-y-6">
             <div class="flex items-center space-x-3 mb-6">
                 <span class="text-4xl">🏆</span>
@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <!-- Tournament Setup -->
+        <!-- Match Setup -->
         <div id="setup-view" class="space-y-6 hidden">
             <div class="flex items-center space-x-3 mb-6">
                 <span class="text-4xl">👥</span>
@@ -295,12 +295,9 @@
             return lowHandicap + highHandicap;
         }
 
-        function calculateHoleResult(team1Score, team2Score, team1Handicap, team2Handicap) {
-            const team1Net = team1Score - team1Handicap;
-            const team2Net = team2Score - team2Handicap;
-            
-            if (team1Net < team2Net) return 'team1';
-            if (team2Net < team1Net) return 'team2';
+        function calculateHoleResult(team1Score, team2Score) {
+            if (team1Score < team2Score) return 'team1';
+            if (team2Score < team1Score) return 'team2';
             return 'tie';
         }
 
@@ -685,11 +682,11 @@
                 resultDiv.classList.remove('hidden');
                 
                 if (result === 'team1') {
-                    resultText.textContent = 'Team 1 Wins Hole';
-                    resultText.className = 'text-lg font-semibold text-green-600';
-                } else if (result === 'team2') {
-                    resultText.textContent = 'Team 2 Wins Hole';
+                    resultText.textContent = `${getTeamDisplayName('team1')} Wins Hole`;
                     resultText.className = 'text-lg font-semibold text-blue-600';
+                } else if (result === 'team2') {
+                    resultText.textContent = `${getTeamDisplayName('team2')} Wins Hole`;
+                    resultText.className = 'text-lg font-semibold text-pink-600';
                 } else {
                     resultText.textContent = 'Hole Tied';
                     resultText.className = 'text-lg font-semibold text-yellow-600';
@@ -706,20 +703,21 @@
             const statusDiv = document.getElementById('match-status');
             const handicapsDiv = document.getElementById('match-handicaps');
             
-            let statusClass = 'text-blue-600';
+            let statusClass = 'text-gray-600';
             let statusText = matchStatus.description;
             
             if (matchStatus.status === 'completed') {
-                statusClass = 'text-green-600';
-                statusText = `${matchStatus.winner === 'team1' ? 'Team 1' : 'Team 2'} wins ${matchStatus.description}`;
+                statusClass = matchStatus.winner === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
             } else if (matchStatus.status === 'tied') {
                 statusClass = 'text-yellow-600';
             } else if (matchStatus.leader) {
-                statusText = `${matchStatus.leader === 'team1' ? 'Team 1' : 'Team 2'} ${matchStatus.description}`;
+                statusClass = matchStatus.leader === 'team1' ? 'text-blue-600' : 'text-pink-600';
+                statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
             }
             
             statusDiv.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
-            handicapsDiv.textContent = `Team 1 Handicap: ${scores.team1Handicap} | Team 2 Handicap: ${scores.team2Handicap}`;
+            handicapsDiv.innerHTML = `<span class="team-big-boys">${getTeamDisplayName('team1')} Handicap: ${scores.team1Handicap}</span> | <span class="team-putt-pirates">${getTeamDisplayName('team2')} Handicap: ${scores.team2Handicap}</span>`;
         }
 
         // Event handlers
@@ -793,9 +791,9 @@
             // Update match display
             document.getElementById('match-title').textContent = match.name;
             
-            const playersText = match.type === 'singles' ? 
-                `${match.team1Player} vs ${match.team2Player}` :
-                `${match.team1Players.join(' & ')} vs ${match.team2Players.join(' & ')}`;
+            const team1Players = match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ');
+            const team2Players = match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ');
+            const playersText = `${getTeamDisplayName('team1')} (${team1Players}) vs ${getTeamDisplayName('team2')} (${team2Players})`;
             document.getElementById('match-players').textContent = playersText;
             
             switchView('scoring');
