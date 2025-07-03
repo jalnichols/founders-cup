@@ -452,14 +452,22 @@
             
             try {
                 const { database, ref, get } = window.firebase;
-                const testRef = ref(database, '.info/connected');
-                const snapshot = await get(testRef);
                 
-                console.log('Firebase connection test result:', snapshot.val());
-                alert(`Firebase connection: ${snapshot.val() ? 'Connected' : 'Disconnected'}`);
+                // Test by trying to read our tournament data
+                const tournamentRef = ref(database, 'tournament');
+                const snapshot = await get(tournamentRef);
+                
+                console.log('Firebase connection test - tournament data exists:', snapshot.exists());
+                console.log('Firebase connection test - data:', snapshot.val());
+                
+                if (snapshot.exists()) {
+                    alert('Firebase connection: SUCCESS - Tournament data found');
+                } else {
+                    alert('Firebase connection: SUCCESS - No tournament data yet');
+                }
             } catch (error) {
                 console.error('Firebase test error:', error);
-                alert('Firebase connection test failed: ' + error.message);
+                alert('Firebase connection test FAILED: ' + error.message);
             }
         }
 
