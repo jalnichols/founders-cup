@@ -250,9 +250,6 @@
                     <p id="match-players" class="text-gray-600 text-sm md:text-base"></p>
                 </div>
                 <div class="flex space-x-2">
-                    <button id="toggle-view" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
-                        Mobile
-                    </button>
                     <button id="back-to-dashboard" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
                         Back
                     </button>
@@ -458,12 +455,12 @@
             const team1Score = scores.team1[hole];
             const team2Score = scores.team2[hole];
             
-            // Check if this hole has no scores
+            // Check if this hole has no scores at all
             const team1HasScore = team1Score && Number.isInteger(team1Score) && team1Score > 0;
             const team2HasScore = team2Score && Number.isInteger(team2Score) && team2Score > 0;
-            const thisHoleHasScores = team1HasScore || team2HasScore;
+            const thisHoleHasAnyScores = team1HasScore || team2HasScore;
             
-            if (thisHoleHasScores) {
+            if (thisHoleHasAnyScores) {
                 return false; // This hole has scores, so it's not skipped
             }
             
@@ -476,6 +473,7 @@
                 const laterTeam2HasScore = laterTeam2Score && Number.isInteger(laterTeam2Score) && laterTeam2Score > 0;
                 
                 if (laterTeam1HasScore || laterTeam2HasScore) {
+                    console.log(`Hole ${hole} is skipped because hole ${laterHole} has scores`);
                     return true; // Found scores in a later hole, so this hole is skipped
                 }
             }
@@ -1243,6 +1241,9 @@
             
             grid.innerHTML = '';
             
+            const scores = matchScores[currentMatch];
+            console.log('renderHoleNavigation - scores:', scores); // Debug log
+            
             for (let hole = 1; hole <= 18; hole++) {
                 const button = document.createElement('button');
                 button.className = 'btn-hole-nav';
@@ -1252,13 +1253,17 @@
                     goToHole(hole);
                 };
                 
-                const scores = matchScores[currentMatch];
-                
                 // Check hole status and add appropriate indicators
-                if (isHoleCompleted(scores, hole)) {
+                const isCompleted = isHoleCompleted(scores, hole);
+                const isPartial = isHolePartiallyCompleted(scores, hole);
+                const isSkipped = isHoleSkipped(scores, hole);
+                
+                console.log(`Hole ${hole}: completed=${isCompleted}, partial=${isPartial}, skipped=${isSkipped}`); // Debug log
+                
+                if (isCompleted) {
                     button.classList.add('completed');
                     button.classList.add('hole-completed-indicator');
-                } else if (isHolePartiallyCompleted(scores, hole)) {
+                } else if (isPartial || isSkipped) {
                     button.classList.add('hole-partial-indicator');
                 }
                 
