@@ -131,6 +131,28 @@
             justify-content: center;
             border: 2px solid white;
         }
+        
+        /* Partial hole styling */
+        .hole-partial-indicator {
+            position: relative;
+        }
+        .hole-partial-indicator::after {
+            content: '✗';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -316,22 +338,8 @@
                 <!-- Quick Navigation -->
                 <div class="bg-white rounded-lg shadow-lg p-4">
                     <h4 class="text-lg font-medium mb-3">Quick Jump to Hole</h4>
-                    <div id="hole-nav-grid" class="grid grid-cols-6 gap-2 mb-3">
+                    <div id="hole-nav-grid" class="grid grid-cols-6 gap-2">
                         <!-- Hole buttons will be populated here -->
-                    </div>
-                    <div class="text-xs text-gray-500 flex items-center gap-4">
-                        <div class="flex items-center">
-                            <span class="inline-block w-4 h-4 bg-green-500 rounded mr-2"></span>
-                            Completed holes
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-4 h-4 bg-blue-600 rounded mr-2"></span>
-                            Current hole
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></span>
-                            Pending holes
-                        </div>
                     </div>
                 </div>
             </div>
@@ -423,6 +431,22 @@
             return team1Score && team2Score && 
                    Number.isInteger(team1Score) && Number.isInteger(team2Score) &&
                    team1Score > 0 && team2Score > 0;
+        }
+
+        // Utility function to check if a hole is partially completed (only one team has score)
+        function isHolePartiallyCompleted(scores, hole) {
+            if (!scores || !scores.team1 || !scores.team2) {
+                return false;
+            }
+            
+            const team1Score = scores.team1[hole];
+            const team2Score = scores.team2[hole];
+            
+            const team1HasScore = team1Score && Number.isInteger(team1Score) && team1Score > 0;
+            const team2HasScore = team2Score && Number.isInteger(team2Score) && team2Score > 0;
+            
+            // Return true if exactly one team has a score (but not both)
+            return (team1HasScore && !team2HasScore) || (!team1HasScore && team2HasScore);
         }
 
         // Firebase functions
@@ -1196,14 +1220,12 @@
                 
                 const scores = matchScores[currentMatch];
                 
-                // Check if this hole is completed (both teams have valid scores > 0)
+                // Check hole status and add appropriate indicators
                 if (isHoleCompleted(scores, hole)) {
                     button.classList.add('completed');
-                    
-                    // Add visual checkmark indicator
-                    if (!button.classList.contains('hole-completed-indicator')) {
-                        button.classList.add('hole-completed-indicator');
-                    }
+                    button.classList.add('hole-completed-indicator');
+                } else if (isHolePartiallyCompleted(scores, hole)) {
+                    button.classList.add('hole-partial-indicator');
                 }
                 
                 // Highlight current hole
