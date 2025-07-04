@@ -473,12 +473,40 @@
                 const laterTeam2HasScore = laterTeam2Score && Number.isInteger(laterTeam2Score) && laterTeam2Score > 0;
                 
                 if (laterTeam1HasScore || laterTeam2HasScore) {
-                    console.log(`Hole ${hole} is skipped because hole ${laterHole} has scores`);
                     return true; // Found scores in a later hole, so this hole is skipped
                 }
             }
             
             return false; // No scores in later holes, so this is just not reached yet
+        }
+
+        // Utility function to find the highest hole number where both teams have completed scores
+        function getMaxCompletedHole(scores) {
+            if (!scores || !scores.team1 || !scores.team2) {
+                return 0;
+            }
+            
+            let maxHole = 0;
+            for (let hole = 1; hole <= 18; hole++) {
+                if (isHoleCompleted(scores, hole)) {
+                    maxHole = hole;
+                }
+            }
+            return maxHole;
+        }
+
+        // Utility function to find the first hole where both teams don't have scores
+        function getFirstUnscoredHole(scores) {
+            if (!scores || !scores.team1 || !scores.team2) {
+                return 1;
+            }
+            
+            for (let hole = 1; hole <= 18; hole++) {
+                if (!isHoleCompleted(scores, hole)) {
+                    return hole;
+                }
+            }
+            return 18; // All holes completed, go to hole 18
         }
 
         // Firebase functions
@@ -1054,10 +1082,12 @@
                     
                     const scores = matchScores[match.id];
                     let matchStatus = null;
+                    let maxCompletedHole = 0;
                     
                     // Only calculate match status if scores exist and are properly structured
                     if (scores && scores.team1 && scores.team2) {
                         matchStatus = calculateMatchStatus(scores);
+                        maxCompletedHole = getMaxCompletedHole(scores);
                     }
                     
                     let statusDisplay = '';
@@ -1079,8 +1109,13 @@
                             statusText = `${matchStatus.leaderName} ${matchStatus.description}`;
                         }
                         
+                        const progressText = maxCompletedHole > 0 ? 
+                            `<div class="text-xs text-gray-500 mt-2">Through hole ${maxCompletedHole} of 18</div>` : 
+                            `<div class="text-xs text-gray-500 mt-2">No holes completed</div>`;
+                        
                         statusDisplay = `<div class="mb-4 p-3 bg-gray-50 rounded-md text-center">
                             <div style="${statusStyle} display: inline-block;">${statusText}</div>
+                            ${progressText}
                         </div>`;
                     }
                     
@@ -1242,7 +1277,6 @@
             grid.innerHTML = '';
             
             const scores = matchScores[currentMatch];
-            console.log('renderHoleNavigation - scores:', scores); // Debug log
             
             for (let hole = 1; hole <= 18; hole++) {
                 const button = document.createElement('button');
@@ -1257,8 +1291,6 @@
                 const isCompleted = isHoleCompleted(scores, hole);
                 const isPartial = isHolePartiallyCompleted(scores, hole);
                 const isSkipped = isHoleSkipped(scores, hole);
-                
-                console.log(`Hole ${hole}: completed=${isCompleted}, partial=${isPartial}, skipped=${isSkipped}`); // Debug log
                 
                 if (isCompleted) {
                     button.classList.add('completed');
@@ -1559,21 +1591,12 @@
             console.log('Opening match:', matchId);
             
             currentMatch = matchId;
-            currentHole = 1;
             
             const match = findMatch(matchId);
             if (!match) {
                 console.log('Match not found:', matchId);
                 return;
             }
-            
-            // Update match display
-            document.getElementById('match-title').textContent = match.name;
-            
-            const team1Players = match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ');
-            const team2Players = match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ');
-            const playersText = `${getTeamDisplayName('team1')} (${team1Players}) vs ${getTeamDisplayName('team2')} (${team2Players})`;
-            document.getElementById('match-players').textContent = playersText;
             
             // Initialize scores if they don't exist
             if (!matchScores[matchId]) {
@@ -1585,6 +1608,18 @@
                     team2Handicap: 0
                 };
             }
+            
+            // Set current hole to the first unscored hole instead of always hole 1
+            currentHole = getFirstUnscoredHole(matchScores[matchId]);
+            console.log(`Starting at hole ${currentHole} (first unscored hole)`);
+            
+            // Update match display
+            document.getElementById('match-title').textContent = match.name;
+            
+            const team1Players = match.type === 'singles' ? match.team1Player : match.team1Players.join(' & ');
+            const team2Players = match.type === 'singles' ? match.team2Player : match.team2Players.join(' & ');
+            const playersText = `${getTeamDisplayName('team1')} (${team1Players}) vs ${getTeamDisplayName('team2')} (${team2Players})`;
+            document.getElementById('match-players').textContent = playersText;
             
             switchView('scoring');
         }
