@@ -449,6 +449,40 @@
             return (team1HasScore && !team2HasScore) || (!team1HasScore && team2HasScore);
         }
 
+        // Utility function to check if a hole has been skipped (no scores but later holes do)
+        function isHoleSkipped(scores, hole) {
+            if (!scores || !scores.team1 || !scores.team2) {
+                return false;
+            }
+            
+            const team1Score = scores.team1[hole];
+            const team2Score = scores.team2[hole];
+            
+            // Check if this hole has no scores
+            const team1HasScore = team1Score && Number.isInteger(team1Score) && team1Score > 0;
+            const team2HasScore = team2Score && Number.isInteger(team2Score) && team2Score > 0;
+            const thisHoleHasScores = team1HasScore || team2HasScore;
+            
+            if (thisHoleHasScores) {
+                return false; // This hole has scores, so it's not skipped
+            }
+            
+            // Check if any subsequent holes have scores
+            for (let laterHole = hole + 1; laterHole <= 18; laterHole++) {
+                const laterTeam1Score = scores.team1[laterHole];
+                const laterTeam2Score = scores.team2[laterHole];
+                
+                const laterTeam1HasScore = laterTeam1Score && Number.isInteger(laterTeam1Score) && laterTeam1Score > 0;
+                const laterTeam2HasScore = laterTeam2Score && Number.isInteger(laterTeam2Score) && laterTeam2Score > 0;
+                
+                if (laterTeam1HasScore || laterTeam2HasScore) {
+                    return true; // Found scores in a later hole, so this hole is skipped
+                }
+            }
+            
+            return false; // No scores in later holes, so this is just not reached yet
+        }
+
         // Firebase functions
         async function initializeFirebase() {
             try {
