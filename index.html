@@ -852,7 +852,7 @@
             
             if (holesPlayed === 18) {
                 if (team1Up === 0) {
-                    return { status: 'tied', description: 'All Square' };
+                    return { status: 'completed', winner: 'tie', description: 'All Square' };
                 }
                 return {
                     status: 'completed',
@@ -951,6 +951,10 @@
                                 bigBoysWins++;
                             } else if (matchStatus.winner === 'team2') {
                                 pittPiratesWins++;
+                            } else if (matchStatus.winner === 'tie') {
+                                // Give half a point to each team for ties
+                                bigBoysWins += 0.5;
+                                pittPiratesWins += 0.5;
                             }
                         } else if (matchStatus.status === 'playing' && matchStatus.leader) {
                             if (matchStatus.leader === 'team1') {
@@ -986,7 +990,7 @@
                             <h3 class="text-xl font-semibold team-big-boys mb-2">${getTeamDisplayName('team1')}</h3>
                             <div class="space-y-2">
                                 <div class="bg-blue-50 rounded-lg p-3">
-                                    <div class="text-2xl font-bold text-blue-600">${scoreboard.bigBoysWins}</div>
+                                    <div class="text-2xl font-bold text-blue-600">${scoreboard.bigBoysWins % 1 === 0 ? scoreboard.bigBoysWins : scoreboard.bigBoysWins.toFixed(1)}</div>
                                     <div class="text-sm text-blue-600">Matches Won</div>
                                 </div>
                                 <div class="bg-blue-50 rounded-lg p-3">
@@ -1001,7 +1005,7 @@
                             <h3 class="text-xl font-semibold team-putt-pirates mb-2">${getTeamDisplayName('team2')}</h3>
                             <div class="space-y-2">
                                 <div class="bg-pink-50 rounded-lg p-3">
-                                    <div class="text-2xl font-bold text-pink-600">${scoreboard.pittPiratesWins}</div>
+                                    <div class="text-2xl font-bold text-pink-600">${scoreboard.pittPiratesWins % 1 === 0 ? scoreboard.pittPiratesWins : scoreboard.pittPiratesWins.toFixed(1)}</div>
                                     <div class="text-sm text-pink-600">Matches Won</div>
                                 </div>
                                 <div class="bg-pink-50 rounded-lg p-3">
@@ -1096,12 +1100,15 @@
                         let statusText = matchStatus.description;
                         
                         if (matchStatus.status === 'completed') {
-                            statusStyle = matchStatus.winner === 'team1' ? 
-                                'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
-                                'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
-                            statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
-                        } else if (matchStatus.status === 'tied') {
-                            statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                            if (matchStatus.winner === 'tie') {
+                                statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                                statusText = `Match tied ${matchStatus.description}`;
+                            } else {
+                                statusStyle = matchStatus.winner === 'team1' ? 
+                                    'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                                    'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                                statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
+                            }
                         } else if (matchStatus.leader) {
                             statusStyle = matchStatus.leader === 'team1' ? 
                                 'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
@@ -1472,12 +1479,15 @@
             let statusText = matchStatus.description;
             
             if (matchStatus.status === 'completed') {
-                statusStyle = matchStatus.winner === 'team1' ? 
-                    'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
-                    'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
-                statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
-            } else if (matchStatus.status === 'tied') {
-                statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                if (matchStatus.winner === 'tie') {
+                    statusStyle = 'background-color: #fef3c7; color: #92400e; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                    statusText = `Match tied ${matchStatus.description}`;
+                } else {
+                    statusStyle = matchStatus.winner === 'team1' ? 
+                        'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
+                        'background-color: #ec4899; color: black; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;';
+                    statusText = `${matchStatus.winnerName} wins ${matchStatus.description}`;
+                }
             } else if (matchStatus.leader) {
                 statusStyle = matchStatus.leader === 'team1' ? 
                     'background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600;' : 
